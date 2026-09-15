@@ -16,7 +16,7 @@
       theme: {
         extend: {
           fontFamily: {
-            sans: ['Inter', 'Noto Sans SC', 'sans-serif'],
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', '"PingFang SC"', '"Hiragino Sans GB"', '"Microsoft YaHei"', '"Noto Sans SC"', 'sans-serif'],
             serif: ['Cinzel', 'serif'],
             spooky: ['Creepster', 'cursive'],
             mono: ['VT323', 'monospace', 'Courier New']
@@ -309,8 +309,8 @@
           <div id="tear-divider" class="relative w-4 z-30 flex flex-col items-center justify-center cursor-pointer group bg-spooky-charcoal/95" title="点击撕开或复原双联相纸">
             <div class="w-full h-full tear-perforation flex flex-col items-center justify-between py-2 pointer-events-none">
               <i class="fa-solid fa-scissors text-[9px] text-spooky-orange/90 -rotate-90"></i>
-              <span id="tear-divider-text" class="text-[8px] font-mono text-spooky-cream/70 tracking-tighter uppercase [writing-mode:vertical-lr] my-auto opacity-75 group-hover:opacity-100 group-hover:text-spooky-orange transition-all">
-                ✂ 易撕线
+              <span id="tear-divider-text" class="text-[8px] font-sans font-bold text-spooky-cream/70 tracking-tighter uppercase [writing-mode:vertical-lr] my-auto opacity-75 group-hover:opacity-100 group-hover:text-spooky-orange transition-all">
+                易撕线
               </span>
               <i class="fa-solid fa-scissors text-[9px] text-spooky-orange/90 -rotate-90"></i>
             </div>
@@ -402,15 +402,15 @@
       </div>
 
       <!-- 底部提示与徽章栏（与相框调换后的位置：位于相框下方） -->
-      <div class="absolute bottom-2.5 sm:bottom-4 inset-x-2.5 sm:inset-x-6 z-30 flex items-center justify-between gap-1.5 pointer-events-none max-w-full box-border">
-        <!-- 左侧提示：深炭色小幽灵图标（无底色） + 深炭色文字无底色 -->
-        <div class="pointer-events-auto flex items-center gap-1.5 px-1 py-1 text-[11px] sm:text-xs font-semibold text-spooky-charcoal min-w-0 flex-1 max-w-[calc(100%-95px)]">
+      <div class="absolute bottom-2.5 sm:bottom-4 inset-x-2.5 sm:inset-x-6 z-30 flex items-center justify-between gap-2 pointer-events-none max-w-full box-border">
+        <!-- 左侧提示：深炭色小幽灵图标（无底色） + 允许自动折为两行并垂直居中对齐 -->
+        <div class="pointer-events-auto flex items-center gap-1.5 px-1 py-0.5 text-[11px] sm:text-xs font-semibold text-spooky-charcoal min-w-0 flex-1">
           <i class="fa-solid fa-ghost text-spooky-charcoal text-sm shrink-0"></i>
-          <span id="tip-main" data-i18n="tip_gesture" class="truncate block">左侧四格可拖拽平移，右侧为同尺寸万圣收藏书签</span>
+          <span id="tip-main" data-i18n="tip_gesture" class="leading-tight break-words">左侧四格可拖拽平移，右侧为同尺寸万圣收藏书签</span>
         </div>
 
         <!-- 右侧连体版徽章 -->
-        <button id="status-sheet-state-btn" class="pointer-events-auto flex items-center gap-1 bg-spooky-charcoal px-2.5 sm:px-3 py-1.5 rounded-xl text-[10px] sm:text-xs font-mono text-spooky-orange shadow-md hover:shadow-solid-lift active:scale-95 transition-all shrink-0 border border-spooky-orange/40">
+        <button id="status-sheet-state-btn" class="pointer-events-auto flex items-center gap-1 bg-spooky-charcoal px-2.5 sm:px-3 py-1.5 rounded-xl text-[10px] sm:text-xs font-mono text-spooky-orange shadow-md hover:shadow-solid-lift active:scale-95 transition-all shrink-0 border border-spooky-orange/40 self-center">
           <span id="status-sheet-state">● 连体版</span>
         </button>
       </div>
@@ -432,10 +432,10 @@
       </nav>
 
       <!-- 面板滚动容器 -->
-      <div class="flex-1 overflow-y-auto p-4 sm:p-5 space-y-6">
+      <div class="flex-1 overflow-y-auto px-4 sm:px-5 pt-2.5 pb-4 space-y-4">
 
         <!-- TAB 1: 照片微调面板 -->
-        <div id="tab-pane-photo" class="space-y-5">
+        <div id="tab-pane-photo" class="space-y-4">
           
           <!-- 双联相纸模式切换条 -->
           <div class="bg-spooky-charcoalDeep p-3 rounded-2xl shadow-sm flex items-center justify-between border border-spooky-rust/20">
@@ -532,10 +532,10 @@
         </div>
 
         <!-- TAB 2: 贴纸印字面板 -->
-        <div id="tab-pane-text" class="hidden space-y-5">
+        <div id="tab-pane-text" class="hidden space-y-4">
           
           <!-- 拍立得文字定制 -->
-          <div class="space-y-3">
+          <div class="space-y-2.5">
             <label class="block text-xs font-bold text-spooky-cream/80 uppercase tracking-wider" data-i18n="label_bottom_text">拍立得底部印字</label>
             
             <div>
@@ -612,21 +612,21 @@
   </main>
 
   <!-- 导出弹窗 -->
-  <div id="export-modal" class="fixed inset-0 z-50 bg-spooky-charcoal/80 backdrop-blur-xs flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-200">
-    <div class="bg-spooky-charcoal rounded-3xl p-5 sm:p-6 max-w-md w-full shadow-card-pitch space-y-4 transform scale-95 transition-transform duration-200 border border-spooky-rust/40">
+  <div id="export-modal" class="fixed inset-0 z-50 bg-spooky-charcoal/80 backdrop-blur-xs flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-200 font-sans">
+    <div class="bg-spooky-charcoal rounded-3xl p-5 sm:p-6 max-w-md w-full shadow-card-pitch space-y-4 transform scale-95 transition-transform duration-200 border border-spooky-rust/40 font-sans">
       
       <div class="flex items-center justify-between border-b border-spooky-rust/30 pb-3">
         <div class="flex items-center gap-2">
           <i class="fa-solid fa-print text-spooky-orange text-lg"></i>
-          <h3 class="font-bold text-base text-spooky-cream" data-i18n="modal_title">选择相片导出方式</h3>
+          <h3 class="font-bold text-base text-spooky-cream font-sans" data-i18n="modal_title">选择相片导出方式</h3>
         </div>
         <button id="btn-close-modal" class="text-spooky-cream/60 hover:text-spooky-cream text-lg px-2">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
 
-      <p class="text-xs text-spooky-cream/70 leading-relaxed" data-i18n="modal_desc">
-        本适配器忠实还原线下人生四格机器规格，支持原版双联整幅输出，或自动撕开分为相片与书签两张独立高清卡片。
+      <p id="modal-desc-text" class="text-xs text-spooky-cream/80 leading-relaxed font-sans" data-i18n="modal_desc">
+        为还原人生四格真实打印过程，本网页支持原版双联整幅输出，或撕开分为相片与书签两张独立高清图片。
       </p>
 
       <div class="space-y-2.5 pt-1">
@@ -665,17 +665,27 @@
         </button>
       </div>
 
+      <!-- 导出弹窗内的返图提示卡片 -->
+      <div class="pt-2 border-t border-spooky-rust/20">
+        <div class="flex items-start gap-2 text-[11px] text-spooky-cream/90 bg-spooky-charcoalDeep rounded-xl p-2.5 border border-spooky-rust/30">
+          <i class="fa-solid fa-camera-retro text-spooky-orange mt-0.5 shrink-0 text-xs"></i>
+          <span id="modal-return-note" class="leading-relaxed text-[11px]">
+            欢迎在 LOFTER 搜索 <a href="https://hispooky.lofter.com/" target="_blank" rel="noopener noreferrer" class="text-spooky-orange hover:text-spooky-cream font-semibold underline underline-offset-2 transition-colors inline-flex items-center gap-0.5">HiSpooky<i class="fa-solid fa-arrow-up-right-from-square text-[9px] ml-0.5"></i></a> 在相关动态下返图
+          </span>
+        </div>
+      </div>
+
     </div>
   </div>
 
   <!-- 模拟线下出纸机器组件 -->
-  <div id="dispenser-overlay" class="fixed inset-0 z-50 bg-spooky-charcoal/85 backdrop-blur-xs flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
-    <div class="relative w-full max-w-sm sm:max-w-md bg-spooky-charcoal rounded-3xl p-5 shadow-card-pitch flex flex-col items-center overflow-hidden border border-spooky-rust/40">
+  <div id="dispenser-overlay" class="fixed inset-0 z-50 bg-spooky-charcoal/85 backdrop-blur-xs flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300 font-sans">
+    <div class="relative w-full max-w-sm sm:max-w-md bg-spooky-charcoal rounded-3xl p-5 shadow-card-pitch flex flex-col items-center overflow-hidden border border-spooky-rust/40 font-sans">
       <!-- 状态栏 -->
       <div class="w-full flex items-center justify-between border-b border-spooky-rust/30 pb-3 mb-4">
         <div class="flex items-center gap-2.5">
           <span class="w-2.5 h-2.5 rounded-full bg-spooky-orange animate-ping"></span>
-          <span id="dispenser-status-text" class="font-mono text-xs font-bold text-spooky-orange tracking-wider">
+          <span id="dispenser-status-text" class="font-sans text-xs font-bold text-spooky-orange tracking-wider">
             ✦ 胶片冲印出纸中... ✦
           </span>
         </div>
@@ -703,7 +713,7 @@
 
       <!-- 底部提示 -->
       <div class="mt-3 text-center">
-        <p class="text-[11px] font-mono text-spooky-cream/80 flex items-center justify-center gap-1.5">
+        <p class="text-[11px] font-sans font-medium text-spooky-cream/80 flex items-center justify-center gap-1.5">
           <i class="fa-solid fa-hand-holding-heart text-spooky-orange"></i>
           <span id="dispenser-take-hint">相片已滑入取纸槽，正在自动保存至本地...</span>
         </p>
@@ -770,26 +780,26 @@
         editing_slot_prefix: "正在编辑：第 ",
         editing_slot_suffix: " 格照片",
         badge_untorn: "● 连体版",
-        badge_torn: "✂ 已撕开独立联",
-        tear_divider_text: "✂ 易撕线",
+        badge_torn: "已撕开独立联",
+        tear_divider_text: "易撕线",
         toast_slot_loaded: "第 {n} 格照片已载入",
         toast_slot_cleared: "已删除第 {n} 格照片",
         toast_batch_loaded: "已成功载入 {n} 张照片！",
         toast_cleared: "已清空所有照片",
         toast_sticker_added: "贴纸已放置，可随意拖动（双击删除）",
         toast_stickers_cleared: "所有贴纸已清除",
-        toast_torn: "✂️ 咔嚓！双联相纸已撕开为独立两联",
+        toast_torn: "咔嚓！双联相纸已撕开为独立两联",
         toast_rejoined: "相纸已重新拼合为整版双联",
         toast_baking: "正在合成冲印级超清万圣相片...",
         toast_exported: "万圣相片已成功导出并下载！",
         dispenser_printing: "✦ 胶片冲印出纸中... ✦",
         dispenser_printing_dual: "✦ 独立双卡冲印出纸中... ✦",
-        dispenser_done: "✂️ 冲印完成！请取走你的万圣相片",
-        dispenser_done_dual: "✂️ 冲印完成！请取走你的相片与书签",
+        dispenser_done: "冲印完成！请取走你的万圣相片",
+        dispenser_done_dual: "冲印完成！请取走你的相片与书签",
         dispenser_hint: "相片已滑入取纸槽，正在自动保存至本地...",
         dispenser_hint_dual: "相片与书签双卡已滑入取纸槽，正在依次保存至本地...",
         modal_title: "选择相片导出方式",
-        modal_desc: "本适配器忠实还原线下人生四格机器规格，支持原版双联整幅输出，或自动撕开分为相片与书签两张独立高清卡片。",
+        modal_desc: "为还原人生四格真实打印过程，本网页支持原版双联整幅输出，或撕开分为相片与书签两张独立高清图片。",
         opt_full_sheet: "导出整版双联相纸",
         opt_full_sheet_desc: "左侧照片 + 中间齿孔线 + 右侧书签",
         opt_separated: "分开导出独立双卡",
@@ -844,26 +854,26 @@
         editing_slot_prefix: "Editing: Photo Slot #",
         editing_slot_suffix: "",
         badge_untorn: "● DOUBLE SHEET",
-        badge_torn: "✂ TORN CUTS",
-        tear_divider_text: "✂ TEAR HERE",
+        badge_torn: "TORN CUTS",
+        tear_divider_text: "TEAR HERE",
         toast_slot_loaded: "Photo Slot #{n} loaded",
         toast_slot_cleared: "Photo Slot #{n} cleared",
         toast_batch_loaded: "Successfully loaded {n} photos!",
         toast_cleared: "All photos cleared",
         toast_sticker_added: "Sticker added! Drag to place (double click to remove)",
         toast_stickers_cleared: "All stickers removed",
-        toast_torn: "✂️ Rip! Double sheet separated into two individual strips",
+        toast_torn: "Rip! Double sheet separated into two individual strips",
         toast_rejoined: "Twin sheet rejoined as one uncut print",
         toast_baking: "Baking high-resolution spooky photo strip...",
         toast_exported: "Spooky strip exported and downloaded!",
         dispenser_printing: "✦ PRINTING PHOTO STRIP... ✦",
         dispenser_printing_dual: "✦ PRINTING DUAL CUTS... ✦",
-        dispenser_done: "✂️ FRESHLY PRINTED! TAKE YOUR CUTS",
-        dispenser_done_dual: "✂️ FRESHLY PRINTED! TAKE BOTH CARDS",
+        dispenser_done: "FRESHLY PRINTED! TAKE YOUR CUTS",
+        dispenser_done_dual: "FRESHLY PRINTED! TAKE BOTH CARDS",
         dispenser_hint: "Cuts dispensed into the tray! Downloading to your device...",
         dispenser_hint_dual: "Both cuts dispensed into the tray! Downloading one by one...",
         modal_title: "Choose Export Mode",
-        modal_desc: "Simulating authentic physical photo booth prints. Export as one complete double sheet or separated cuts.",
+        modal_desc: "To faithfully recreate the authentic photo booth print experience, this web app supports original double-sheet full print, or torn cuts as two separate HD cards.",
         opt_full_sheet: "Export Full Double Sheet",
         opt_full_sheet_desc: "Left photos + perforation line + right bookmark",
         opt_separated: "Export Separated Strips",
@@ -993,6 +1003,9 @@
 
       const returnNoteEl = document.getElementById('credit-return-note');
       if (returnNoteEl) returnNoteEl.innerHTML = dict.return_notice;
+
+      const modalReturnNoteEl = document.getElementById('modal-return-note');
+      if (modalReturnNoteEl) modalReturnNoteEl.innerHTML = dict.return_notice;
 
       const creatorLinkEl = document.getElementById('creator-link');
       if (creatorLinkEl) {
@@ -1718,7 +1731,7 @@
       ctx.font = `bold ${18 * exportScale}px Creepster, cursive`;
       ctx.fillText(state.titleText, canvas.width / 2, (footerRect.top - leftRect.top + 13) * exportScale);
 
-      ctx.font = `500 ${8.5 * exportScale}px Inter, monospace`;
+      ctx.font = `500 ${8.5 * exportScale}px "PingFang SC", "Microsoft YaHei", Inter, sans-serif`;
       ctx.fillStyle = '#F7CB8C';
       const subLine = `${state.dateText}  ✦  ${state.subText}`;
       ctx.fillText(subLine, canvas.width / 2, (footerRect.top - leftRect.top + 24) * exportScale);
