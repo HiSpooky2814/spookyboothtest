@@ -210,10 +210,10 @@
   <main class="flex-1 flex flex-col lg:flex-row overflow-hidden max-w-[1700px] w-full mx-auto p-2 sm:p-5 gap-3 sm:gap-5">
     
     <!-- 左侧/中间：双联相纸预览工作区 -->
-    <section class="flex-1 bg-midnight-900/60 rounded-3xl p-2 sm:p-8 pt-14 sm:pt-20 flex items-center justify-center overflow-auto relative border border-purple-950/60 min-h-[500px] sm:min-h-[600px]">
+    <section class="flex-1 bg-midnight-900/60 rounded-3xl p-2 sm:p-8 pt-12 sm:pt-16 flex items-start sm:items-center justify-center overflow-auto relative border border-purple-950/60 min-h-[500px] sm:min-h-[600px]">
       
       <!-- 绝对定位的浮动提示与徽章栏 (限定在顶部安全区，永不遮挡相框) -->
-      <div class="absolute top-3 sm:top-5 inset-x-3 sm:inset-x-6 z-30 flex items-center justify-between gap-2 pointer-events-none">
+      <div class="absolute top-2.5 sm:top-4 inset-x-2.5 sm:inset-x-6 z-30 flex items-center justify-between gap-2 pointer-events-none">
         <!-- 左侧提示 -->
         <div class="pointer-events-auto flex items-center gap-1.5 sm:gap-2 bg-midnight-850/90 backdrop-blur px-2.5 sm:px-3 py-1.5 rounded-xl text-[10px] sm:text-xs text-stone-300 shadow-md border border-stone-800 flex-1 min-w-0 max-w-fit">
           <i class="fa-solid fa-ghost text-pumpkin-400 shrink-0"></i>
@@ -227,7 +227,7 @@
       </div>
 
       <!-- 核心双联相纸卡片外层容器 (Twin Strip Container) -->
-      <div id="photostrip-wrapper" class="relative transition-all duration-300 transform scale-[0.82] sm:scale-90 md:scale-95 lg:scale-100 origin-center my-auto select-none">
+      <div id="photostrip-wrapper" class="relative transition-all duration-300 transform scale-[0.82] sm:scale-90 md:scale-95 lg:scale-100 origin-top sm:origin-center mt-1 sm:my-auto select-none">
         
         <!-- 双联卡片母体 -->
         <div id="twin-sheet" class="sheet-joined relative flex items-stretch">
@@ -2074,13 +2074,15 @@
       const container = wrapper.parentElement;
       if (!container) return;
 
-      // 精确扣除 Section 的真实 Padding，划分出安全的相纸缩放区，彻底防止向上生长遮挡徽章
+      const isMobile = window.innerWidth < 640;
+
+      // 精确扣除 Section 的真实 Padding
       const style = window.getComputedStyle(container);
       const paddingY = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
       const paddingX = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
 
       const availableW = container.clientWidth - paddingX;
-      const availableH = container.clientHeight - paddingY - 16; // 预留 16px 的呼吸安全边界
+      const availableH = container.clientHeight - paddingY - (isMobile ? 12 : 24);
 
       const baseW = twinSheetEl.offsetWidth || 546;
       const baseH = twinSheetEl.offsetHeight || 850;
@@ -2096,6 +2098,16 @@
       fitScale = parseFloat(fitScale.toFixed(3));
 
       wrapper.style.transform = `scale(${fitScale})`;
+
+      // 手机端将缩放原点置顶并消除缩放产生的底部无效高度占用，紧贴徽章
+      if (isMobile) {
+        wrapper.style.transformOrigin = 'top center';
+        const heightReduction = baseH * (1 - fitScale);
+        wrapper.style.marginBottom = `-${Math.round(heightReduction)}px`;
+      } else {
+        wrapper.style.transformOrigin = 'center center';
+        wrapper.style.marginBottom = '';
+      }
     }
 
     window.addEventListener('resize', autoScaleViewport);
