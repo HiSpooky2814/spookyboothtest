@@ -68,6 +68,17 @@
       -webkit-user-select: none;
     }
 
+    /* 悬浮删除快捷按钮 */
+    .slot-hover-delete {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease, transform 0.15s ease;
+    }
+    .photo-slot:hover .slot-hover-delete {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
     .sticker-item {
       touch-action: none;
       user-select: none;
@@ -207,6 +218,9 @@
                   <span class="text-[11px] font-medium text-stone-400 group-hover:text-stone-300" data-i18n="slot_prompt_1">点击上传第 1 格</span>
                 </div>
                 <div class="slot-badge absolute top-1.5 left-1.5 z-20 text-[10px] font-bold px-1.5 py-0.5 rounded bg-black/60 text-pumpkin-400 border border-purple-900/50">1</div>
+                <button class="slot-hover-delete absolute top-1.5 right-1.5 z-30 w-6 h-6 rounded-full bg-black/70 hover:bg-red-600/90 text-stone-300 hover:text-white flex items-center justify-center text-xs transition border border-stone-700" title="清空这格照片" data-slot-del="0">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
               </div>
 
               <!-- Slot 1 -->
@@ -217,6 +231,9 @@
                   <span class="text-[11px] font-medium text-stone-400 group-hover:text-stone-300" data-i18n="slot_prompt_2">点击上传第 2 格</span>
                 </div>
                 <div class="slot-badge absolute top-1.5 left-1.5 z-20 text-[10px] font-bold px-1.5 py-0.5 rounded bg-black/60 text-pumpkin-400 border border-purple-900/50">2</div>
+                <button class="slot-hover-delete absolute top-1.5 right-1.5 z-30 w-6 h-6 rounded-full bg-black/70 hover:bg-red-600/90 text-stone-300 hover:text-white flex items-center justify-center text-xs transition border border-stone-700" title="清空这格照片" data-slot-del="1">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
               </div>
 
               <!-- Slot 2 -->
@@ -227,6 +244,9 @@
                   <span class="text-[11px] font-medium text-stone-400 group-hover:text-stone-300" data-i18n="slot_prompt_3">点击上传第 3 格</span>
                 </div>
                 <div class="slot-badge absolute top-1.5 left-1.5 z-20 text-[10px] font-bold px-1.5 py-0.5 rounded bg-black/60 text-pumpkin-400 border border-purple-900/50">3</div>
+                <button class="slot-hover-delete absolute top-1.5 right-1.5 z-30 w-6 h-6 rounded-full bg-black/70 hover:bg-red-600/90 text-stone-300 hover:text-white flex items-center justify-center text-xs transition border border-stone-700" title="清空这格照片" data-slot-del="2">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
               </div>
 
               <!-- Slot 3 -->
@@ -237,6 +257,9 @@
                   <span class="text-[11px] font-medium text-stone-400 group-hover:text-stone-300" data-i18n="slot_prompt_4">点击上传第 4 格</span>
                 </div>
                 <div class="slot-badge absolute top-1.5 left-1.5 z-20 text-[10px] font-bold px-1.5 py-0.5 rounded bg-black/60 text-pumpkin-400 border border-purple-900/50">4</div>
+                <button class="slot-hover-delete absolute top-1.5 right-1.5 z-30 w-6 h-6 rounded-full bg-black/70 hover:bg-red-600/90 text-stone-300 hover:text-white flex items-center justify-center text-xs transition border border-stone-700" title="清空这格照片" data-slot-del="3">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
               </div>
             </div>
 
@@ -249,9 +272,6 @@
                 <path d="M 132 16 C 127 12 122 14 118 10 C 120 15 125 17 123 22 C 128 20 130 19 132 20 C 134 19 137 20 142 22 C 140 17 145 15 147 10 C 143 14 137 12 132 16 Z" fill="#ea580c" fill-opacity="0.6"/>
               </svg>
             </div>
-
-            <!-- 贴纸装饰层 -->
-            <div id="stickers-layer" class="absolute inset-0 pointer-events-none z-25 overflow-hidden"></div>
 
             <!-- 左联底部拍立得文字区 -->
             <div id="photostrip-footer" class="mt-3 pt-2 pb-1 flex flex-col items-center justify-center text-center relative z-20">
@@ -361,6 +381,9 @@
 
           </div>
 
+          <!-- 全局贴纸装饰层 (横跨左联相纸、中缝与右联书签) -->
+          <div id="stickers-layer" class="absolute inset-0 pointer-events-none z-35 overflow-visible"></div>
+
         </div>
       </div>
     </section>
@@ -415,11 +438,17 @@
           <div class="bg-midnight-850/80 p-3.5 rounded-2xl border border-stone-800 space-y-3.5">
             <div class="flex items-center justify-between">
               <span id="active-slot-name" class="text-xs font-bold text-stone-300">正在编辑：第 1 格照片</span>
-              <label class="text-xs text-pumpkin-400 font-semibold cursor-pointer hover:underline flex items-center gap-1">
-                <i class="fa-solid fa-upload"></i>
-                <span data-i18n="action_replace">替换当前照片</span>
-                <input id="input-single-slot-photo" type="file" accept="image/*" class="hidden">
-              </label>
+              <div class="flex items-center gap-2.5">
+                <label class="text-xs text-pumpkin-400 font-semibold cursor-pointer hover:underline flex items-center gap-1">
+                  <i class="fa-solid fa-upload"></i>
+                  <span data-i18n="action_replace">替换</span>
+                  <input id="input-single-slot-photo" type="file" accept="image/*" class="hidden">
+                </label>
+                <button id="btn-delete-active-slot" class="text-xs text-stone-400 hover:text-red-400 font-medium transition flex items-center gap-1" title="清空当前格照片">
+                  <i class="fa-regular fa-trash-can"></i>
+                  <span data-i18n="btn_delete_single">删除</span>
+                </button>
+              </div>
             </div>
 
             <!-- 缩放滑块 -->
@@ -428,7 +457,11 @@
                 <span class="text-stone-400 flex items-center gap-1.5"><i class="fa-solid fa-magnifying-glass-plus text-stone-500"></i><span data-i18n="label_zoom">大小缩放</span></span>
                 <span id="val-zoom" class="font-mono text-pumpkin-400">100%</span>
               </div>
-              <input id="slider-zoom" type="range" min="0.5" max="3" step="0.02" value="1" class="w-full accent-pumpkin-500 bg-midnight-950 rounded-lg cursor-pointer">
+              <input id="slider-zoom" type="range" min="0.2" max="3.5" step="0.01" value="1" class="w-full accent-pumpkin-500 bg-midnight-950 rounded-lg cursor-pointer">
+              <div class="flex justify-between text-[10px] text-stone-500 font-mono">
+                <span>20% (查看全貌)</span>
+                <span>350% (特写局部)</span>
+              </div>
             </div>
 
             <!-- 旋转滑块 -->
@@ -445,6 +478,10 @@
               <button id="btn-flip-photo" class="flex-1 py-1.5 bg-midnight-800 border border-stone-700 hover:border-pumpkin-500/60 rounded-xl text-xs font-medium text-stone-300 transition flex items-center justify-center gap-1.5">
                 <i class="fa-solid fa-arrows-left-right text-xs text-pumpkin-400"></i>
                 <span data-i18n="btn_flip">水平翻转</span>
+              </button>
+              <button id="btn-fit-photo" class="flex-1 py-1.5 bg-midnight-800 border border-stone-700 hover:border-pumpkin-500/60 rounded-xl text-xs font-medium text-stone-300 transition flex items-center justify-center gap-1.5" title="将整张照片缩小完整放入格中">
+                <i class="fa-solid fa-expand text-xs text-pumpkin-400"></i>
+                <span data-i18n="btn_fit_full">适应全图</span>
               </button>
               <button id="btn-reset-transform" class="flex-1 py-1.5 bg-midnight-800 border border-stone-700 hover:border-pumpkin-500/60 rounded-xl text-xs font-medium text-stone-300 transition flex items-center justify-center gap-1.5">
                 <i class="fa-solid fa-arrow-rotate-left text-xs text-pumpkin-400"></i>
@@ -622,7 +659,7 @@
         btn_batch: "导入4张照片",
         btn_clear: "清空",
         btn_export: "导出相片",
-        tip_gesture: "左侧四格可拖拽平移，右侧为同尺寸万圣收藏书签",
+        tip_gesture: "左侧四格可随意拖动平移找角度，支持滚轮大幅度缩放",
         tab_photo: "照片微调",
         tab_text: "贴纸印字",
         label_sheet_mode: "双联纸张状态",
@@ -636,10 +673,12 @@
         slot_prompt_2: "点击上传第 2 格",
         slot_prompt_3: "点击上传第 3 格",
         slot_prompt_4: "点击上传第 4 格",
-        action_replace: "替换当前照片",
+        action_replace: "替换",
+        btn_delete_single: "删除此格",
         label_zoom: "大小缩放",
         label_rotate: "角度微调",
         btn_flip: "水平翻转",
+        btn_fit_full: "适应全图",
         btn_reset: "居中复位",
         label_filters: "万圣气氛滤镜",
         filter_orig: "原图色彩",
@@ -661,6 +700,7 @@
         editing_slot_prefix: "正在编辑：第 ",
         editing_slot_suffix: " 格照片",
         toast_slot_loaded: "第 {n} 格照片已载入",
+        toast_slot_cleared: "已删除第 {n} 格照片",
         toast_batch_loaded: "已成功载入 {n} 张照片！",
         toast_cleared: "已清空所有照片",
         toast_sticker_added: "贴纸已放置，可随意拖动（双击删除）",
@@ -684,7 +724,7 @@
         btn_batch: "Import 4 Photos",
         btn_clear: "Clear",
         btn_export: "Export Cuts",
-        tip_gesture: "Left: 4-cut photo strip. Right: identical-sized collector bookmark",
+        tip_gesture: "Drag freely inside frames to reposition, scroll to zoom in/out smoothly",
         tab_photo: "Photo Fine-tune",
         tab_text: "Stickers & Text",
         label_sheet_mode: "Twin Sheet Perforation",
@@ -698,10 +738,12 @@
         slot_prompt_2: "Click to upload Slot 2",
         slot_prompt_3: "Click to upload Slot 3",
         slot_prompt_4: "Click to upload Slot 4",
-        action_replace: "Replace photo",
+        action_replace: "Replace",
+        btn_delete_single: "Clear Slot",
         label_zoom: "Scale Zoom",
         label_rotate: "Rotation",
         btn_flip: "Flip H",
+        btn_fit_full: "Fit Frame",
         btn_reset: "Reset Pos",
         label_filters: "SPOOKY FILTERS",
         filter_orig: "Original",
@@ -723,6 +765,7 @@
         editing_slot_prefix: "Editing: Photo Slot #",
         editing_slot_suffix: "",
         toast_slot_loaded: "Photo Slot #{n} loaded",
+        toast_slot_cleared: "Photo Slot #{n} cleared",
         toast_batch_loaded: "Successfully loaded {n} photos!",
         toast_cleared: "All photos cleared",
         toast_sticker_added: "Sticker added! Drag to place (double click to remove)",
@@ -863,14 +906,37 @@
       }
     }
 
+    // 计算根据不同照片比例的初始展示尺寸 (以最大宽/高保持自由移动空间)
+    function applyNaturalImageSizing(img, slotEl) {
+      const slotWidth = slotEl.offsetWidth || 237;
+      const slotHeight = slotEl.offsetHeight || 178;
+      const naturalAspect = (img.naturalWidth || 1) / (img.naturalHeight || 1);
+      const slotAspect = slotWidth / slotHeight;
+
+      img.style.position = 'absolute';
+      img.style.maxWidth = 'none';
+      img.style.maxHeight = 'none';
+
+      // 默认填满，但保留自由拖拽出边缘
+      if (naturalAspect > slotAspect) {
+        img.style.height = `${slotHeight}px`;
+        img.style.width = `${slotHeight * naturalAspect}px`;
+      } else {
+        img.style.width = `${slotWidth}px`;
+        img.style.height = `${slotWidth / naturalAspect}px`;
+      }
+    }
+
     function updateSlotVisual(index) {
       const slotData = state.slots[index];
       const slotEl = slotElements[index];
       const contentEl = slotEl.querySelector('.slot-content');
       const placeholderEl = slotEl.querySelector('.slot-placeholder');
+      const hoverDelBtn = slotEl.querySelector('.slot-hover-delete');
 
       if (slotData.img) {
         placeholderEl.style.display = 'none';
+        if (hoverDelBtn) hoverDelBtn.style.display = 'flex';
         let img = contentEl.querySelector('img');
         
         if (!img || img.dataset.src !== slotData.img.src) {
@@ -879,17 +945,20 @@
           img.src = slotData.img.src;
           img.dataset.src = slotData.img.src;
           img.alt = `Slot ${index + 1}`;
-          img.className = `w-full h-full object-cover select-none will-change-transform ${slotData.filter}`;
+          img.className = `select-none will-change-transform ${slotData.filter}`;
           img.draggable = false;
           contentEl.appendChild(img);
+          applyNaturalImageSizing(img, slotEl);
         } else {
-          img.className = `w-full h-full object-cover select-none will-change-transform ${slotData.filter}`;
+          img.className = `select-none will-change-transform ${slotData.filter}`;
+          applyNaturalImageSizing(img, slotEl);
         }
         
         updateSlotTransform(index);
       } else {
         placeholderEl.style.display = 'flex';
         contentEl.innerHTML = '';
+        if (hoverDelBtn) hoverDelBtn.style.display = 'none';
       }
 
       if (state.activeSlot === index) {
@@ -899,202 +968,56 @@
       }
     }
 
-    function renderAllSlots() {
-      for (let i = 0; i < 4; i++) {
-        updateSlotVisual(i);
-      }
+    function clearSlot(index) {
+      if (!state.slots[index].img) return;
+      state.slots[index].img = null;
+      state.slots[index].x = 0;
+      state.slots[index].y = 0;
+      state.slots[index].scale = 1;
+      state.slots[index].rotate = 0;
+      state.slots[index].flip = false;
+      updateSlotVisual(index);
+      selectSlot(index, false);
+      const dict = i18nData[currentLang];
+      showToast(dict.toast_slot_cleared.replace('{n}', index + 1), 'info');
     }
 
-    function selectSlot(index, shouldRerender = true) {
-      state.activeSlot = index;
-      document.querySelectorAll('.slot-select-btn').forEach((btn, i) => {
-        if (i === index) {
-          btn.className = 'slot-select-btn py-2 px-1 rounded-xl border-2 border-pumpkin-500 bg-pumpkin-950/40 text-xs font-bold text-pumpkin-400 transition';
-        } else {
-          btn.className = 'slot-select-btn py-2 px-1 rounded-xl border-2 border-stone-800 bg-midnight-850 hover:bg-midnight-800 text-xs font-bold text-stone-400 transition';
-        }
-      });
+    // 单格删除绑定
+    document.getElementById('btn-delete-active-slot').addEventListener('click', () => {
+      clearSlot(state.activeSlot);
+    });
 
-      const active = state.slots[index];
-      const dict = i18nData[currentLang];
-      activeSlotName.textContent = `${dict.editing_slot_prefix}${index + 1}${dict.editing_slot_suffix}`;
+    document.querySelectorAll('.slot-hover-delete').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const slotIdx = parseInt(btn.dataset.slotDel, 10);
+        clearSlot(slotIdx);
+      });
+    });
+
+    // 适应全图按钮逻辑 (将任何长宽比的照片缩小，使其完整不被裁切显示在框内)
+    document.getElementById('btn-fit-photo').addEventListener('click', () => {
+      const active = state.slots[state.activeSlot];
+      if (!active.img) return;
+
+      const slotEl = slotElements[state.activeSlot];
+      const slotWidth = slotEl.offsetWidth || 237;
+      const slotHeight = slotEl.offsetHeight || 178;
+      const naturalAspect = (active.img.naturalWidth || 1) / (active.img.naturalHeight || 1);
+      const slotAspect = slotWidth / slotHeight;
+
+      // 如果原来是以短边撑满的，计算缩小比例让长边也完全纳入框中
+      if (naturalAspect > slotAspect) {
+        active.scale = parseFloat((slotAspect / naturalAspect).toFixed(2));
+      } else {
+        active.scale = parseFloat((naturalAspect / slotAspect).toFixed(2));
+      }
+
+      active.x = 0;
+      active.y = 0;
       sliderZoom.value = active.scale;
       valZoom.textContent = `${Math.round(active.scale * 100)}%`;
-      sliderRotate.value = active.rotate;
-      valRotate.textContent = `${active.rotate}°`;
-
-      document.querySelectorAll('.filter-btn').forEach(btn => {
-        if (btn.dataset.filter === active.filter) {
-          btn.className = 'filter-btn p-2 rounded-xl border border-pumpkin-500 bg-pumpkin-950/40 font-semibold text-pumpkin-300 text-center transition';
-        } else {
-          btn.className = 'filter-btn p-2 rounded-xl border border-stone-800 bg-midnight-850 hover:bg-midnight-800 text-stone-400 text-center transition';
-        }
-      });
-
-      slotElements.forEach((el, i) => {
-        if (i === index) {
-          el.classList.add('ring-2', 'ring-pumpkin-500');
-        } else {
-          el.classList.remove('ring-2', 'ring-pumpkin-500');
-        }
-      });
-
-      if (shouldRerender) {
-        renderAllSlots();
-      }
-    }
-
-    function setupDragAndZoom() {
-      slotElements.forEach((slotEl, idx) => {
-        let isPointerDown = false;
-        let startX = 0;
-        let startY = 0;
-        let initialX = 0;
-        let initialY = 0;
-        let hasMoved = false;
-        let activeScale = 1;
-
-        const getWrapperScale = () => {
-          const rect = sheetLeft.getBoundingClientRect();
-          return rect.width / (sheetLeft.offsetWidth || 1);
-        };
-
-        slotEl.addEventListener('pointerdown', (e) => {
-          if (e.button !== 0 && e.pointerType === 'mouse') return;
-
-          selectSlot(idx, false);
-          if (!state.slots[idx].img) return;
-
-          isPointerDown = true;
-          hasMoved = false;
-          startX = e.clientX;
-          startY = e.clientY;
-          initialX = state.slots[idx].x;
-          initialY = state.slots[idx].y;
-          activeScale = getWrapperScale() || 1;
-
-          try {
-            slotEl.setPointerCapture(e.pointerId);
-          } catch (err) {}
-
-          e.preventDefault();
-        });
-
-        slotEl.addEventListener('pointermove', (e) => {
-          if (!isPointerDown) return;
-          const dx = (e.clientX - startX) / activeScale;
-          const dy = (e.clientY - startY) / activeScale;
-
-          if (Math.hypot(dx, dy) > 2) hasMoved = true;
-
-          state.slots[idx].x = Math.round(initialX + dx);
-          state.slots[idx].y = Math.round(initialY + dy);
-          updateSlotTransform(idx);
-        });
-
-        const handlePointerEnd = (e) => {
-          if (!isPointerDown) return;
-          isPointerDown = false;
-          try {
-            if (slotEl.hasPointerCapture(e.pointerId)) {
-              slotEl.releasePointerCapture(e.pointerId);
-            }
-          } catch (err) {}
-
-          if (!hasMoved) selectSlot(idx, true);
-        };
-
-        slotEl.addEventListener('pointerup', handlePointerEnd);
-        slotEl.addEventListener('pointercancel', handlePointerEnd);
-
-        slotEl.addEventListener('click', () => {
-          if (!state.slots[idx].img && !hasMoved) {
-            selectSlot(idx, false);
-            document.getElementById('input-single-slot-photo').click();
-          }
-        });
-
-        slotEl.addEventListener('wheel', (e) => {
-          if (!state.slots[idx].img) return;
-          e.preventDefault();
-          selectSlot(idx, false);
-          
-          const delta = e.deltaY < 0 ? 0.08 : -0.08;
-          let newScale = Math.min(Math.max(0.5, state.slots[idx].scale + delta), 3.5);
-          state.slots[idx].scale = parseFloat(newScale.toFixed(2));
-          sliderZoom.value = state.slots[idx].scale;
-          valZoom.textContent = `${Math.round(state.slots[idx].scale * 100)}%`;
-          updateSlotTransform(idx);
-        }, { passive: false });
-      });
-    }
-
-    function loadImageFromFile(file, callback) {
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => callback(img);
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    }
-
-    // 照片导入绑定
-    document.getElementById('input-single-slot-photo').addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      loadImageFromFile(file, (img) => {
-        state.slots[state.activeSlot].img = img;
-        state.slots[state.activeSlot].x = 0;
-        state.slots[state.activeSlot].y = 0;
-        state.slots[state.activeSlot].scale = 1;
-        state.slots[state.activeSlot].rotate = 0;
-        selectSlot(state.activeSlot, true);
-        const dict = i18nData[currentLang];
-        showToast(dict.toast_slot_loaded.replace('{n}', state.activeSlot + 1));
-      });
-      e.target.value = '';
-    });
-
-    document.getElementById('btn-batch-upload').addEventListener('click', () => {
-      document.getElementById('input-batch-files').click();
-    });
-
-    document.getElementById('input-batch-files').addEventListener('change', (e) => {
-      const files = Array.from(e.target.files).slice(0, 4);
-      if (files.length === 0) return;
-
-      let loadedCount = 0;
-      files.forEach((file, idx) => {
-        loadImageFromFile(file, (img) => {
-          state.slots[idx].img = img;
-          state.slots[idx].x = 0;
-          state.slots[idx].y = 0;
-          state.slots[idx].scale = 1;
-          state.slots[idx].rotate = 0;
-          loadedCount++;
-          if (loadedCount === files.length) {
-            renderAllSlots();
-            const dict = i18nData[currentLang];
-            showToast(dict.toast_batch_loaded.replace('{n}', loadedCount));
-          }
-        });
-      });
-      e.target.value = '';
-    });
-
-    document.getElementById('btn-clear-all').addEventListener('click', () => {
-      state.slots.forEach(s => {
-        s.img = null;
-        s.x = 0;
-        s.y = 0;
-        s.scale = 1;
-        s.rotate = 0;
-        s.flip = false;
-      });
-      renderAllSlots();
-      showToast(i18nData[currentLang].toast_cleared, 'info');
+      updateSlotTransform(state.activeSlot);
     });
 
     sliderZoom.addEventListener('input', (e) => {
@@ -1208,8 +1131,8 @@
 
       stickerEl.title = currentLang === 'zh' ? "拖动位移，滚轮缩放，双击删除" : "Drag to move, wheel to resize, double-click to delete";
 
-      let currentX = Math.max(20, (sheetLeft.offsetWidth / 2) - 18);
-      let currentY = Math.max(20, (sheetLeft.offsetHeight / 2) - 18);
+      let currentX = Math.max(20, (twinSheet.offsetWidth / 2) - 18);
+      let currentY = Math.max(20, (twinSheet.offsetHeight / 2) - 18);
       stickerEl.style.left = `${currentX}px`;
       stickerEl.style.top = `${currentY}px`;
 
@@ -1226,8 +1149,8 @@
       let scaleAtPinchStart = 1;
 
       const getWrapperScale = () => {
-        const rect = sheetLeft.getBoundingClientRect();
-        return rect.width / (sheetLeft.offsetWidth || 1);
+        const rect = twinSheet.getBoundingClientRect();
+        return rect.width / (twinSheet.offsetWidth || 1);
       };
 
       const updateScaleVisual = () => {
@@ -1246,17 +1169,15 @@
 
       stickerEl.addEventListener('pointerdown', (e) => {
         if (e.button !== 0 && e.pointerType === 'mouse') return;
-        activeTouches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        isDragging = true;
+        startPointerX = e.clientX;
+        startPointerY = e.clientY;
+        initialLeft = stickerEl.offsetLeft;
+        initialTop = stickerEl.offsetTop;
+        activeScale = getWrapperScale() || 1;
 
-        if (activeTouches.size === 1) {
-          isDragging = true;
-          startPointerX = e.clientX;
-          startPointerY = e.clientY;
-          initialLeft = stickerEl.offsetLeft;
-          initialTop = stickerEl.offsetTop;
-          activeScale = getWrapperScale() || 1;
-        } else if (activeTouches.size === 2) {
-          isDragging = false;
+        activeTouches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (activeTouches.size === 2) {
           const points = Array.from(activeTouches.values());
           initialPinchDistance = Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y);
           scaleAtPinchStart = currentScale;
@@ -1322,6 +1243,214 @@
       showToast(i18nData[currentLang].toast_stickers_cleared, 'info');
     });
 
+    // 槽位选择管理
+    function selectSlot(index, shouldRerender = true) {
+      state.activeSlot = index;
+      document.querySelectorAll('.slot-select-btn').forEach((btn, i) => {
+        if (i === index) {
+          btn.className = 'slot-select-btn py-2 px-1 rounded-xl border-2 border-pumpkin-500 bg-pumpkin-950/40 text-xs font-bold text-pumpkin-400 transition';
+        } else {
+          btn.className = 'slot-select-btn py-2 px-1 rounded-xl border-2 border-stone-800 bg-midnight-850 hover:bg-midnight-800 text-xs font-bold text-stone-400 transition';
+        }
+      });
+
+      const active = state.slots[index];
+      const dict = i18nData[currentLang];
+      activeSlotName.textContent = `${dict.editing_slot_prefix}${index + 1}${dict.editing_slot_suffix}`;
+      sliderZoom.value = active.scale;
+      valZoom.textContent = `${Math.round(active.scale * 100)}%`;
+      sliderRotate.value = active.rotate;
+      valRotate.textContent = `${active.rotate}°`;
+
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        if (btn.dataset.filter === active.filter) {
+          btn.className = 'filter-btn p-2 rounded-xl border border-pumpkin-500 bg-pumpkin-950/40 font-semibold text-pumpkin-300 text-center transition';
+        } else {
+          btn.className = 'filter-btn p-2 rounded-xl border border-stone-800 bg-midnight-850 hover:bg-midnight-800 text-stone-400 text-center transition';
+        }
+      });
+
+      slotElements.forEach((el, i) => {
+        if (i === index) {
+          el.classList.add('ring-2', 'ring-pumpkin-500');
+        } else {
+          el.classList.remove('ring-2', 'ring-pumpkin-500');
+        }
+      });
+
+      if (shouldRerender) {
+        updateSlotVisual(index);
+      }
+    }
+
+    // 插槽照片交互引擎 (拖拽平移、滚轮缩放、点击上传)
+    function setupDragAndZoom() {
+      slotElements.forEach((slotEl, idx) => {
+        let isPointerDown = false;
+        let startX = 0;
+        let startY = 0;
+        let initialX = 0;
+        let initialY = 0;
+        let hasMoved = false;
+        let activeScale = 1;
+
+        const getWrapperScale = () => {
+          const rect = sheetLeft.getBoundingClientRect();
+          return rect.width / (sheetLeft.offsetWidth || 1);
+        };
+
+        slotEl.addEventListener('pointerdown', (e) => {
+          if (e.target.closest('.slot-hover-delete')) return;
+          if (e.button !== 0 && e.pointerType === 'mouse') return;
+
+          selectSlot(idx, false);
+          if (!state.slots[idx].img) return;
+
+          isPointerDown = true;
+          hasMoved = false;
+          startX = e.clientX;
+          startY = e.clientY;
+          initialX = state.slots[idx].x;
+          initialY = state.slots[idx].y;
+          activeScale = getWrapperScale() || 1;
+
+          try {
+            slotEl.setPointerCapture(e.pointerId);
+          } catch (err) {}
+
+          e.preventDefault();
+        });
+
+        slotEl.addEventListener('pointermove', (e) => {
+          if (!isPointerDown) return;
+          const dx = (e.clientX - startX) / activeScale;
+          const dy = (e.clientY - startY) / activeScale;
+
+          if (Math.hypot(dx, dy) > 2) {
+            hasMoved = true;
+          }
+
+          state.slots[idx].x = Math.round(initialX + dx);
+          state.slots[idx].y = Math.round(initialY + dy);
+          updateSlotTransform(idx);
+        });
+
+        const handlePointerEnd = (e) => {
+          if (!isPointerDown) return;
+          isPointerDown = false;
+          try {
+            if (slotEl.hasPointerCapture(e.pointerId)) {
+              slotEl.releasePointerCapture(e.pointerId);
+            }
+          } catch (err) {}
+          if (!hasMoved) {
+            selectSlot(idx, true);
+          }
+        };
+
+        slotEl.addEventListener('pointerup', handlePointerEnd);
+        slotEl.addEventListener('pointercancel', handlePointerEnd);
+
+        slotEl.addEventListener('click', (e) => {
+          if (e.target.closest('.slot-hover-delete')) return;
+          if (!state.slots[idx].img && !hasMoved) {
+            selectSlot(idx, false);
+            document.getElementById('input-single-slot-photo').click();
+          }
+        });
+
+        slotEl.addEventListener('wheel', (e) => {
+          if (!state.slots[idx].img) return;
+          e.preventDefault();
+          selectSlot(idx, false);
+
+          const delta = e.deltaY < 0 ? 0.08 : -0.08;
+          let newScale = Math.min(Math.max(0.2, state.slots[idx].scale + delta), 3.5);
+          state.slots[idx].scale = parseFloat(newScale.toFixed(2));
+          sliderZoom.value = state.slots[idx].scale;
+          valZoom.textContent = `${Math.round(state.slots[idx].scale * 100)}%`;
+          updateSlotTransform(idx);
+        }, { passive: false });
+      });
+    }
+
+    function loadImageFromFile(file, callback) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => callback(img);
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // 单张照片替换
+    document.getElementById('input-single-slot-photo').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      loadImageFromFile(file, (img) => {
+        state.slots[state.activeSlot].img = img;
+        state.slots[state.activeSlot].x = 0;
+        state.slots[state.activeSlot].y = 0;
+        state.slots[state.activeSlot].scale = 1;
+        state.slots[state.activeSlot].rotate = 0;
+        selectSlot(state.activeSlot, true);
+        const dict = i18nData[currentLang];
+        showToast(dict.toast_slot_loaded.replace('{n}', state.activeSlot + 1));
+      });
+      e.target.value = '';
+    });
+
+    // 批量导入4张
+    document.getElementById('btn-batch-upload').addEventListener('click', () => {
+      document.getElementById('input-batch-files').click();
+    });
+
+    document.getElementById('input-batch-files').addEventListener('change', (e) => {
+      const files = Array.from(e.target.files).slice(0, 4);
+      if (files.length === 0) return;
+
+      let loadedCount = 0;
+      files.forEach((file, idx) => {
+        loadImageFromFile(file, (img) => {
+          state.slots[idx].img = img;
+          state.slots[idx].x = 0;
+          state.slots[idx].y = 0;
+          state.slots[idx].scale = 1;
+          state.slots[idx].rotate = 0;
+          loadedCount++;
+          if (loadedCount === files.length) {
+            for (let i = 0; i < 4; i++) {
+              updateSlotVisual(i);
+            }
+            selectSlot(state.activeSlot, true);
+            const dict = i18nData[currentLang];
+            showToast(dict.toast_batch_loaded.replace('{n}', loadedCount));
+          }
+        });
+      });
+      e.target.value = '';
+    });
+
+    // 清空所有照片
+    document.getElementById('btn-clear-all').addEventListener('click', () => {
+      state.slots.forEach(s => {
+        s.img = null;
+        s.x = 0;
+        s.y = 0;
+        s.scale = 1;
+        s.rotate = 0;
+        s.flip = false;
+      });
+      for (let i = 0; i < 4; i++) {
+        updateSlotVisual(i);
+      }
+      selectSlot(state.activeSlot, true);
+      const dict = i18nData[currentLang];
+      showToast(dict.toast_cleared, 'info');
+    });
+
     // 滤镜渲染器
     function applyFilterToContext(ctx, filterClass) {
       switch (filterClass) {
@@ -1365,8 +1494,41 @@
       if (e.target === exportModal) btnCloseModal.click();
     });
 
+    // 绘制全局贴纸到对应 Canvas 上（支持全局整版或单联局部投射）
+    function drawStickersToContext(ctx, targetOffsetLeft, targetWidth, exportScale) {
+      const twinRect = twinSheet.getBoundingClientRect();
+      const stickerDoms = stickersLayer.querySelectorAll('.sticker-item');
+
+      stickerDoms.forEach(s => {
+        const sRect = s.getBoundingClientRect();
+        const sScale = parseFloat(s.dataset.scale || '1');
+        const sEmoji = s.dataset.emoji || s.querySelector('.emoji-content')?.textContent || '🎃';
+
+        // 贴纸相对于双联容器的坐标
+        const relX = (sRect.left - twinRect.left);
+        const relY = (sRect.top - twinRect.top);
+        const sCenterX = relX + sRect.width / 2;
+        const sCenterY = relY + sRect.height / 2;
+
+        // 如果在目标输出区域范围内
+        const canvasX = (sCenterX - targetOffsetLeft) * exportScale;
+        const canvasY = sCenterY * exportScale;
+
+        // 宽限容错渲染
+        if (canvasX >= -100 && canvasX <= (targetWidth + 100) * exportScale) {
+          ctx.save();
+          ctx.translate(canvasX, canvasY);
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.font = `${Math.round(22 * sScale * exportScale)}px "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
+          ctx.fillText(sEmoji, 0, 0);
+          ctx.restore();
+        }
+      });
+    }
+
     // 核心渲染：渲染单张相片条 (Left Strip)
-    function renderPhotoStripCanvas(exportScale = 4) {
+    function renderPhotoStripCanvas(exportScale = 4, includeStickers = true) {
       const leftRect = sheetLeft.getBoundingClientRect();
       const canvas = document.createElement('canvas');
       canvas.width = leftRect.width * exportScale;
@@ -1407,18 +1569,19 @@
           if (slot.flip) ctx.scale(-1, 1);
           ctx.scale(slot.scale, slot.scale);
 
-          const imgAspect = slot.img.width / slot.img.height;
+          // 基于真实图片宽高与插槽比例计算精确渲染基准
+          const naturalAspect = (slot.img.naturalWidth || slot.img.width) / (slot.img.naturalHeight || slot.img.height);
           const slotAspect = slotCanvasW / slotCanvasH;
-          let drawW, drawH;
-          if (imgAspect > slotAspect) {
-            drawH = slotCanvasH;
-            drawW = slotCanvasH * imgAspect;
+          let baseW, baseH;
+          if (naturalAspect > slotAspect) {
+            baseH = slotCanvasH;
+            baseW = slotCanvasH * naturalAspect;
           } else {
-            drawW = slotCanvasW;
-            drawH = slotCanvasW / imgAspect;
+            baseW = slotCanvasW;
+            baseH = slotCanvasW / naturalAspect;
           }
 
-          ctx.drawImage(slot.img, -drawW / 2, -drawH / 2, drawW, drawH);
+          ctx.drawImage(slot.img, -baseW / 2, -baseH / 2, baseW, baseH);
           ctx.restore();
         }
         ctx.restore();
@@ -1448,29 +1611,16 @@
       ctx.fillText(subLine, canvas.width / 2, (footerRect.top - leftRect.top + 27) * exportScale);
       ctx.restore();
 
-      // 贴纸层
-      const stickerDoms = stickersLayer.querySelectorAll('.sticker-item');
-      stickerDoms.forEach(s => {
-        const sRect = s.getBoundingClientRect();
-        const sScale = parseFloat(s.dataset.scale || '1');
-        const sEmoji = s.dataset.emoji || s.querySelector('.emoji-content')?.textContent || '🎃';
-        const sCenterX = (sRect.left - leftRect.left + sRect.width / 2) * exportScale;
-        const sCenterY = (sRect.top - leftRect.top + sRect.height / 2) * exportScale;
-        
-        ctx.save();
-        ctx.translate(sCenterX, sCenterY);
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.font = `${Math.round(22 * sScale * exportScale)}px "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
-        ctx.fillText(sEmoji, 0, 0);
-        ctx.restore();
-      });
+      // 如果单独导出左联，将落在左联的贴纸投射进来
+      if (includeStickers) {
+        drawStickersToContext(ctx, 0, leftRect.width, exportScale);
+      }
 
       return canvas;
     }
 
     // 核心渲染：渲染单张书签条 (Right Bookmark Strip)
-    function renderBookmarkCanvas(exportScale = 4) {
+    function renderBookmarkCanvas(exportScale = 4, includeStickers = true) {
       const rightRect = sheetRight.getBoundingClientRect();
       const canvas = document.createElement('canvas');
       canvas.width = rightRect.width * exportScale;
@@ -1513,7 +1663,6 @@
       const centerY = canvas.height * 0.45;
 
       ctx.save();
-      // 光晕圆圈
       const grad = ctx.createRadialGradient(centerX, centerY, 10 * exportScale, centerX, centerY, 60 * exportScale);
       grad.addColorStop(0, 'rgba(249, 115, 22, 0.25)');
       grad.addColorStop(1, 'rgba(147, 51, 234, 0.02)');
@@ -1572,6 +1721,13 @@
       ctx.fillText("PHOTO BOOTH EDITION  ✦  BOOKMARK 1/1", canvas.width / 2, barY + barH + 20 * exportScale);
       ctx.restore();
 
+      // 如果单独导出右联，将落在右联的贴纸投射进来
+      if (includeStickers) {
+        const leftWidth = sheetLeft.offsetWidth || 265;
+        const dividerWidth = tearDivider.offsetWidth || 16;
+        drawStickersToContext(ctx, leftWidth + dividerWidth, rightRect.width, exportScale);
+      }
+
       return canvas;
     }
 
@@ -1582,16 +1738,16 @@
       link.click();
     }
 
-    // 1. 导出整版双联（未撕开，合并中间齿孔）
+    // 1. 导出整版双联（未撕开，合并中间齿孔并完整投射贯穿式贴纸）
     document.getElementById('btn-export-combined').addEventListener('click', () => {
       btnCloseModal.click();
       showToast(i18nData[currentLang].toast_baking, 'info');
 
       setTimeout(() => {
         const exportScale = 4;
-        const photoCanvas = renderPhotoStripCanvas(exportScale);
-        const bookmarkCanvas = renderBookmarkCanvas(exportScale);
-        const tearGap = 12 * exportScale; // 中间齿孔间隔
+        const photoCanvas = renderPhotoStripCanvas(exportScale, false);
+        const bookmarkCanvas = renderBookmarkCanvas(exportScale, false);
+        const tearGap = 16 * exportScale;
 
         const fullCanvas = document.createElement('canvas');
         fullCanvas.width = photoCanvas.width + tearGap + bookmarkCanvas.width;
@@ -1619,25 +1775,28 @@
         // 贴右联书签
         ctx.drawImage(bookmarkCanvas, photoCanvas.width + tearGap, 0);
 
+        // 整体统一叠加贯穿全局的贴纸（无论贴纸横跨左右还是落在中缝都完美保留）
+        drawStickersToContext(ctx, 0, fullCanvas.width / exportScale, exportScale);
+
         downloadDataUrl(fullCanvas.toDataURL('image/png', 0.96), `SpookyBooth_FullDoubleSheet_${Date.now()}.png`);
         showToast(i18nData[currentLang].toast_exported, 'success');
       }, 100);
     });
 
-    // 2. 分开导出双份独立卡片（一张照片 + 一张书签）
+    // 2. 分开导出双份独立卡片（一张照片 + 一张书签，贴纸分别裁剪保留）
     document.getElementById('btn-export-split').addEventListener('click', () => {
       btnCloseModal.click();
       showToast(i18nData[currentLang].toast_baking, 'info');
 
       setTimeout(() => {
         const exportScale = 4;
-        const photoCanvas = renderPhotoStripCanvas(exportScale);
-        const bookmarkCanvas = renderBookmarkCanvas(exportScale);
+        const photoCanvas = renderPhotoStripCanvas(exportScale, true);
+        const bookmarkCanvas = renderBookmarkCanvas(exportScale, true);
 
         // 下载照片条
         downloadDataUrl(photoCanvas.toDataURL('image/png', 0.96), `SpookyBooth_1_PhotoStrip_${Date.now()}.png`);
 
-        // 延迟触发第二张下载以避免浏览器阻拦多文件下载
+        // 延迟触发第二张下载以避免浏览器拦截多文件并发下载
         setTimeout(() => {
           downloadDataUrl(bookmarkCanvas.toDataURL('image/png', 0.96), `SpookyBooth_2_Bookmark_${Date.now()}.png`);
           showToast(i18nData[currentLang].toast_exported, 'success');
@@ -1650,16 +1809,48 @@
       btnCloseModal.click();
       showToast(i18nData[currentLang].toast_baking, 'info');
       setTimeout(() => {
-        const photoCanvas = renderPhotoStripCanvas(4);
+        const photoCanvas = renderPhotoStripCanvas(4, true);
         downloadDataUrl(photoCanvas.toDataURL('image/png', 0.96), `SpookyBooth_PhotoStrip_${Date.now()}.png`);
         showToast(i18nData[currentLang].toast_exported, 'success');
       }, 100);
     });
 
+    // 动态视口自适应缩放计算函数
+    function autoScaleViewport() {
+      const wrapper = document.getElementById('photostrip-wrapper');
+      const twinSheetEl = document.getElementById('twin-sheet');
+      if (!wrapper || !twinSheetEl) return;
+
+      const container = wrapper.parentElement;
+      if (!container) return;
+
+      const availableW = container.clientWidth - 32;
+      const availableH = container.clientHeight - 80;
+
+      const baseW = twinSheetEl.offsetWidth || 546;
+      const baseH = twinSheetEl.offsetHeight || 850;
+
+      if (availableW <= 0 || availableH <= 0) return;
+
+      const scaleX = availableW / baseW;
+      const scaleY = availableH / baseH;
+      let fitScale = Math.min(scaleX, scaleY, 1);
+
+      // 设置手机端最小缩放保护
+      fitScale = Math.max(fitScale, 0.4);
+      fitScale = parseFloat(fitScale.toFixed(3));
+
+      wrapper.style.transform = `scale(${fitScale})`;
+    }
+
+    window.addEventListener('resize', autoScaleViewport);
+
     window.addEventListener('DOMContentLoaded', () => {
       setupDragAndZoom();
       selectSlot(0);
       setLanguage('zh');
+      autoScaleViewport();
+      setTimeout(autoScaleViewport, 100);
     });
   </script>
 </body>
