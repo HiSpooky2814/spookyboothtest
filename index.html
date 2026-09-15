@@ -1,0 +1,1666 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spooky Booth - A Halloween Photo Booth by HiSpooky</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Creepster&family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&family=VT323&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans SC', 'sans-serif'],
+            serif: ['Cinzel', 'serif'],
+            spooky: ['Creepster', 'cursive'],
+            mono: ['VT323', 'monospace', 'Courier New']
+          },
+          colors: {
+            midnight: {
+              950: '#0a0812',
+              900: '#120d1f',
+              850: '#181228',
+              800: '#201835',
+              700: '#322650',
+            },
+            pumpkin: {
+              300: '#fdba74',
+              400: '#fb923c',
+              500: '#f97316',
+              600: '#ea580c',
+              700: '#c2410c',
+            },
+            witch: {
+              400: '#c084fc',
+              500: '#a855f7',
+              600: '#9333ea',
+            }
+          },
+          boxShadow: {
+            'photostrip-card': '0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(249, 115, 22, 0.25)',
+            'torn-paper': '0 20px 40px -10px rgba(0, 0, 0, 0.7)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    
+    /* 万圣滤镜 */
+    .filter-original { filter: none; }
+    .filter-pumpkin { filter: sepia(0.35) saturate(1.4) contrast(1.1) hue-rotate(-12deg); }
+    .filter-vampire { filter: contrast(1.3) saturate(1.35) brightness(0.9) drop-shadow(0 0 1px rgba(185,28,28,0.3)); }
+    .filter-noir { filter: grayscale(1) contrast(1.45) brightness(0.92); }
+    .filter-fog { filter: contrast(0.9) brightness(1.05) saturate(0.7) hue-rotate(180deg); }
+    .filter-ghoul { filter: hue-rotate(85deg) saturate(1.3) contrast(1.15) brightness(0.96); }
+
+    .photo-slot {
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .sticker-item {
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+      will-change: transform, left, top;
+      cursor: grab;
+    }
+    .sticker-item:active { cursor: grabbing; }
+
+    /* 撕开动画状态类 */
+    .sheet-half {
+      transition: transform 0.65s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.65s ease;
+      will-change: transform;
+    }
+
+    /* 未撕开状态：贴合 */
+    .sheet-joined .sheet-left {
+      transform: translateX(0) rotate(0deg);
+    }
+    .sheet-joined .sheet-right {
+      transform: translateX(0) rotate(0deg);
+    }
+
+    /* 已撕开状态：左右微倾斜滑开 */
+    .sheet-torn .sheet-left {
+      transform: translateX(-18px) rotate(-1.6deg);
+      box-shadow: -15px 25px 45px rgba(0,0,0,0.8);
+    }
+    .sheet-torn .sheet-right {
+      transform: translateX(18px) rotate(1.6deg);
+      box-shadow: 15px 25px 45px rgba(0,0,0,0.8);
+    }
+
+    /* 拟真撕裂齿孔边线 */
+    .tear-perforation {
+      background-image: radial-gradient(circle, #0a0812 2px, transparent 2.5px);
+      background-size: 8px 10px;
+      background-repeat: repeat-y;
+      background-position: center;
+    }
+
+    /* 锯齿手撕边缘特效 */
+    .torn-edge-left {
+      background: radial-gradient(circle at 100% 50%, transparent 4px, #0f0b18 4.5px);
+      background-size: 8px 10px;
+      background-repeat: repeat-y;
+    }
+    .torn-edge-right {
+      background: radial-gradient(circle at 0% 50%, transparent 4px, #0f0b18 4.5px);
+      background-size: 8px 10px;
+      background-repeat: repeat-y;
+    }
+  </style>
+</head>
+<body class="bg-midnight-950 text-stone-200 antialiased min-h-screen flex flex-col font-sans selection:bg-pumpkin-500 selection:text-white">
+
+  <!-- 顶部导航栏 -->
+  <header class="bg-midnight-900/90 backdrop-blur-md border-b border-purple-950/80 sticky top-0 z-40 px-4 lg:px-8 py-2.5 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div>
+        <h1 class="font-spooky text-2xl sm:text-3xl text-pumpkin-400 tracking-wider leading-none">
+          Spooky Booth
+        </h1>
+        <p id="app-subtitle" data-i18n="subtitle" class="text-[11px] text-stone-400 tracking-wide mt-0.5 font-medium">
+          万圣节限定四格双联相纸 · @HiSpooky
+        </p>
+      </div>
+    </div>
+
+    <!-- 顶部操作区 -->
+    <div class="flex items-center gap-2 sm:gap-3">
+      <!-- 撕开/合拢 快捷动作 -->
+      <button id="btn-toggle-tear" class="px-3 py-1.5 rounded-xl border border-pumpkin-500/50 bg-pumpkin-950/40 hover:bg-pumpkin-900/50 text-pumpkin-300 text-xs font-semibold transition flex items-center gap-1.5 shadow-sm active:scale-95">
+        <i id="tear-icon" class="fa-solid fa-scissors text-pumpkin-400"></i>
+        <span id="tear-label" data-i18n="btn_tear">撕开相纸</span>
+      </button>
+
+      <!-- 中英语言切换 -->
+      <button id="btn-lang-toggle" class="px-2.5 py-1.5 rounded-xl border border-stone-700 hover:border-pumpkin-500/50 bg-midnight-800 text-stone-300 hover:text-pumpkin-400 text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+        <i class="fa-solid fa-globe text-xs"></i>
+        <span id="lang-label">EN</span>
+      </button>
+
+      <!-- 批量导入 -->
+      <button id="btn-batch-upload" class="px-3.5 py-1.5 rounded-xl border border-stone-700 hover:border-pumpkin-500 bg-midnight-800 text-xs sm:text-sm font-medium hover:bg-midnight-700 text-stone-200 transition flex items-center gap-1.5 shadow-sm">
+        <i class="fa-solid fa-images text-pumpkin-400"></i>
+        <span data-i18n="btn_batch">导入4张照片</span>
+      </button>
+
+      <!-- 清空照片 -->
+      <button id="btn-clear-all" class="px-3 py-1.5 rounded-xl border border-stone-800 text-xs sm:text-sm text-stone-400 hover:text-red-400 hover:border-red-900/50 hover:bg-red-950/20 transition flex items-center gap-1">
+        <i class="fa-solid fa-trash-can text-xs"></i>
+        <span data-i18n="btn_clear" class="hidden sm:inline">清空</span>
+      </button>
+
+      <!-- 导出菜单按钮 -->
+      <button id="btn-export-menu" class="px-4 py-1.5 rounded-xl bg-pumpkin-600 hover:bg-pumpkin-500 text-white text-xs sm:text-sm font-semibold active:scale-95 transition flex items-center gap-1.5 shadow-md">
+        <i class="fa-solid fa-download"></i>
+        <span data-i18n="btn_export">导出相片</span>
+        <i class="fa-solid fa-chevron-down text-[10px] ml-0.5"></i>
+      </button>
+    </div>
+  </header>
+
+  <main class="flex-1 flex flex-col lg:flex-row overflow-hidden max-w-[1700px] w-full mx-auto p-3 sm:p-5 gap-5">
+    
+    <!-- 左侧/中间：双联相纸预览工作区 -->
+    <section class="flex-1 bg-midnight-900/60 rounded-3xl p-4 sm:p-8 flex items-center justify-center overflow-auto relative border border-purple-950/60 min-h-[600px]">
+      
+      <!-- 预览操作提示与模式状态 -->
+      <div class="absolute top-4 left-4 z-30 flex items-center gap-2 bg-midnight-850/90 backdrop-blur px-3 py-1.5 rounded-xl text-xs text-stone-300 shadow-md border border-stone-800">
+        <i class="fa-solid fa-ghost text-pumpkin-400"></i>
+        <span id="tip-main" data-i18n="tip_gesture">左侧四格可拖拽平移，右侧为同尺寸万圣收藏书签</span>
+      </div>
+
+      <!-- 撕开状态小徽章提示 -->
+      <div class="absolute top-4 right-4 z-30 flex items-center gap-2 bg-midnight-850/90 backdrop-blur px-3 py-1.5 rounded-xl text-xs font-mono text-pumpkin-400 shadow-md border border-stone-800">
+        <span id="status-sheet-state">● DOUBLE SHEET (连体版)</span>
+      </div>
+
+      <!-- 核心双联相纸卡片外层容器 (Twin Strip Container) -->
+      <div id="photostrip-wrapper" class="relative transition-all duration-300 transform scale-[0.82] sm:scale-90 md:scale-95 lg:scale-100 origin-center my-auto select-none">
+        
+        <!-- 双联卡片母体 -->
+        <div id="twin-sheet" class="sheet-joined relative flex items-stretch">
+          
+          <!-- ================= 左联：四格相纸 (Photo Strip) ================= -->
+          <div id="sheet-left" class="sheet-half sheet-left relative w-[265px] bg-[#0d0914] rounded-l-2xl overflow-hidden p-3.5 flex flex-col border-2 border-r-0 border-stone-800 z-20">
+            
+            <!-- 4个照片插槽 -->
+            <div id="slots-container" class="flex flex-col gap-2.5 flex-1 relative z-10">
+              <!-- Slot 0 -->
+              <div class="photo-slot relative w-full aspect-[4/3] rounded-lg overflow-hidden bg-stone-900 cursor-grab active:cursor-grabbing border border-stone-800 group select-none" data-index="0">
+                <div class="slot-content absolute inset-0 pointer-events-none flex items-center justify-center overflow-hidden"></div>
+                <div class="slot-placeholder absolute inset-0 flex flex-col items-center justify-center text-stone-500 gap-1.5 p-2 text-center pointer-events-none">
+                  <i class="fa-solid fa-plus-circle text-2xl text-stone-600 group-hover:text-pumpkin-400 group-hover:scale-110 transition"></i>
+                  <span class="text-[11px] font-medium text-stone-400 group-hover:text-stone-300" data-i18n="slot_prompt_1">点击上传第 1 格</span>
+                </div>
+                <div class="slot-badge absolute top-1.5 left-1.5 z-20 text-[10px] font-bold px-1.5 py-0.5 rounded bg-black/60 text-pumpkin-400 border border-purple-900/50">1</div>
+              </div>
+
+              <!-- Slot 1 -->
+              <div class="photo-slot relative w-full aspect-[4/3] rounded-lg overflow-hidden bg-stone-900 cursor-grab active:cursor-grabbing border border-stone-800 group select-none" data-index="1">
+                <div class="slot-content absolute inset-0 pointer-events-none flex items-center justify-center overflow-hidden"></div>
+                <div class="slot-placeholder absolute inset-0 flex flex-col items-center justify-center text-stone-500 gap-1.5 p-2 text-center pointer-events-none">
+                  <i class="fa-solid fa-plus-circle text-2xl text-stone-600 group-hover:text-pumpkin-400 group-hover:scale-110 transition"></i>
+                  <span class="text-[11px] font-medium text-stone-400 group-hover:text-stone-300" data-i18n="slot_prompt_2">点击上传第 2 格</span>
+                </div>
+                <div class="slot-badge absolute top-1.5 left-1.5 z-20 text-[10px] font-bold px-1.5 py-0.5 rounded bg-black/60 text-pumpkin-400 border border-purple-900/50">2</div>
+              </div>
+
+              <!-- Slot 2 -->
+              <div class="photo-slot relative w-full aspect-[4/3] rounded-lg overflow-hidden bg-stone-900 cursor-grab active:cursor-grabbing border border-stone-800 group select-none" data-index="2">
+                <div class="slot-content absolute inset-0 pointer-events-none flex items-center justify-center overflow-hidden"></div>
+                <div class="slot-placeholder absolute inset-0 flex flex-col items-center justify-center text-stone-500 gap-1.5 p-2 text-center pointer-events-none">
+                  <i class="fa-solid fa-plus-circle text-2xl text-stone-600 group-hover:text-pumpkin-400 group-hover:scale-110 transition"></i>
+                  <span class="text-[11px] font-medium text-stone-400 group-hover:text-stone-300" data-i18n="slot_prompt_3">点击上传第 3 格</span>
+                </div>
+                <div class="slot-badge absolute top-1.5 left-1.5 z-20 text-[10px] font-bold px-1.5 py-0.5 rounded bg-black/60 text-pumpkin-400 border border-purple-900/50">3</div>
+              </div>
+
+              <!-- Slot 3 -->
+              <div class="photo-slot relative w-full aspect-[4/3] rounded-lg overflow-hidden bg-stone-900 cursor-grab active:cursor-grabbing border border-stone-800 group select-none" data-index="3">
+                <div class="slot-content absolute inset-0 pointer-events-none flex items-center justify-center overflow-hidden"></div>
+                <div class="slot-placeholder absolute inset-0 flex flex-col items-center justify-center text-stone-500 gap-1.5 p-2 text-center pointer-events-none">
+                  <i class="fa-solid fa-plus-circle text-2xl text-stone-600 group-hover:text-pumpkin-400 group-hover:scale-110 transition"></i>
+                  <span class="text-[11px] font-medium text-stone-400 group-hover:text-stone-300" data-i18n="slot_prompt_4">点击上传第 4 格</span>
+                </div>
+                <div class="slot-badge absolute top-1.5 left-1.5 z-20 text-[10px] font-bold px-1.5 py-0.5 rounded bg-black/60 text-pumpkin-400 border border-purple-900/50">4</div>
+              </div>
+            </div>
+
+            <!-- 万圣相框装饰层 (矢量镂空框架) -->
+            <div id="frame-overlay" class="absolute inset-0 pointer-events-none z-20 overflow-hidden">
+              <svg class="w-full h-full absolute inset-0" viewBox="0 0 265 850" preserveAspectRatio="none" fill="none">
+                <rect x="6" y="6" width="253" height="838" rx="8" stroke="#ea580c" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="6 3"/>
+                <path d="M 12 30 C 22 14 42 12 55 12" stroke="#ea580c" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M 253 30 C 243 14 223 12 210 12" stroke="#ea580c" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M 132 16 C 127 12 122 14 118 10 C 120 15 125 17 123 22 C 128 20 130 19 132 20 C 134 19 137 20 142 22 C 140 17 145 15 147 10 C 143 14 137 12 132 16 Z" fill="#ea580c" fill-opacity="0.6"/>
+              </svg>
+            </div>
+
+            <!-- 贴纸装饰层 -->
+            <div id="stickers-layer" class="absolute inset-0 pointer-events-none z-25 overflow-hidden"></div>
+
+            <!-- 左联底部拍立得文字区 -->
+            <div id="photostrip-footer" class="mt-3 pt-2 pb-1 flex flex-col items-center justify-center text-center relative z-20">
+              <span id="display-title" class="font-serif text-[12px] tracking-widest font-bold uppercase text-pumpkin-400 leading-tight">SPOOKY BOOTH</span>
+              <div class="flex items-center gap-2 mt-0.5 text-[8.5px] tracking-wider text-stone-400 font-mono">
+                <span id="display-date">2026.10.31</span>
+                <span class="text-pumpkin-500">✦</span>
+                <span id="display-sub">HALLOWEEN EDITION</span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- ================= 中缝：易撕虚线与撕开按钮 ================= -->
+          <div id="tear-divider" class="relative w-4 z-30 flex flex-col items-center justify-center cursor-pointer group" title="点击撕开或复原双联相纸">
+            <!-- 齿孔打孔点点 -->
+            <div class="w-full h-full tear-perforation flex flex-col items-center justify-between py-2 pointer-events-none">
+              <i class="fa-solid fa-scissors text-[9px] text-pumpkin-500/70 -rotate-90"></i>
+              <span class="text-[8px] font-mono text-stone-500 tracking-tighter uppercase [writing-mode:vertical-lr] my-auto opacity-70 group-hover:opacity-100 group-hover:text-pumpkin-400 transition">
+                TEAR HERE ✂ 易撕线
+              </span>
+              <i class="fa-solid fa-scissors text-[9px] text-pumpkin-500/70 -rotate-90"></i>
+            </div>
+            <!-- 悬浮点击热区反馈 -->
+            <div class="absolute inset-0 bg-pumpkin-500/0 group-hover:bg-pumpkin-500/10 rounded-sm transition"></div>
+          </div>
+
+          <!-- ================= 右联：收藏书签页 (Bookmark Strip) ================= -->
+          <div id="sheet-right" class="sheet-half sheet-right relative w-[265px] bg-[#0f0b18] rounded-r-2xl overflow-hidden p-4 flex flex-col border-2 border-l-0 border-stone-800 z-20 justify-between">
+            
+            <!-- 背景暗纹与边框线 -->
+            <div class="absolute inset-0 pointer-events-none overflow-hidden">
+              <svg class="w-full h-full absolute inset-0" viewBox="0 0 265 850" preserveAspectRatio="none" fill="none">
+                <rect x="6" y="6" width="253" height="838" rx="8" stroke="#a855f7" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="4 4"/>
+                <path d="M 12 12 L 36 36 M 12 24 L 28 32 M 24 12 L 32 28" stroke="#c084fc" stroke-width="0.75" stroke-opacity="0.4"/>
+                <path d="M 253 12 L 229 36 M 253 24 L 237 32 M 241 12 L 233 28" stroke="#c084fc" stroke-width="0.75" stroke-opacity="0.4"/>
+                <circle cx="132.5" cy="400" r="160" stroke="#f97316" stroke-opacity="0.04" stroke-width="30"/>
+              </svg>
+            </div>
+
+            <!-- 书签顶部：票根标题与限定编号 -->
+            <div class="relative z-10 pt-1 text-center border-b border-purple-900/40 pb-3">
+              <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-pumpkin-950/60 border border-pumpkin-500/30 text-[9px] font-mono text-pumpkin-400 mb-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-pumpkin-500 animate-pulse"></span>
+                <span>LIMITED BOOKMARK #0831</span>
+              </div>
+              <h3 class="font-spooky text-2xl text-pumpkin-400 tracking-wider">Spooky Tales</h3>
+              <p class="text-[9px] font-serif uppercase tracking-widest text-witch-400 mt-0.5">Collectors Halloween Ticket</p>
+            </div>
+
+            <!-- 书签中部：手绘艺术插图展区 (Artist Showcase Space) -->
+            <div class="relative z-10 my-auto py-4 flex flex-col items-center text-center">
+              
+              <div class="relative w-40 h-56 rounded-xl border border-stone-800 bg-midnight-950/80 p-3 flex flex-col items-center justify-between shadow-inner overflow-hidden group">
+                <!-- 内部艺术插图/南瓜月夜矢量 -->
+                <div class="w-full flex-1 flex flex-col items-center justify-center relative">
+                  <div class="w-24 h-24 rounded-full bg-gradient-to-b from-pumpkin-500/20 via-witch-600/10 to-transparent flex items-center justify-center mb-1">
+                    <span class="text-5xl filter drop-shadow">🎃</span>
+                  </div>
+                  <span class="font-serif text-xs font-bold tracking-widest text-stone-200 mt-1">TRICK OR TREAT</span>
+                  <span class="text-[9px] text-stone-400 font-mono mt-0.5">UNDER THE BLOOD MOON</span>
+                </div>
+
+                <div class="w-full pt-2 border-t border-purple-950/60 flex items-center justify-between text-[8.5px] font-mono text-stone-400">
+                  <span>PASS #1031</span>
+                  <span class="text-pumpkin-400">✦ ALL HALLOWS ✦</span>
+                </div>
+              </div>
+
+              <!-- 寄语卡片 -->
+              <div class="mt-4 px-3 py-2 bg-midnight-950/50 rounded-lg border border-purple-900/30 text-left w-full max-w-[210px]">
+                <p class="text-[10px] text-stone-300 font-medium leading-relaxed italic">
+                  “Keep the spirits close, and your memories closer.”
+                </p>
+                <span class="block text-[8px] font-mono text-pumpkin-400 text-right mt-1">— HiSpooky & 星驰法棍</span>
+              </div>
+            </div>
+
+            <!-- 书签底部：收据条形码与印章 (Barcode & Receipt) -->
+            <div class="relative z-10 border-t border-purple-900/40 pt-3 flex flex-col items-center gap-1.5">
+              <!-- 条形码生成 -->
+              <div class="flex items-center gap-[2px] h-7 opacity-80">
+                <span class="w-[3px] h-full bg-stone-300"></span>
+                <span class="w-[1px] h-full bg-stone-300"></span>
+                <span class="w-[4px] h-full bg-stone-300"></span>
+                <span class="w-[2px] h-full bg-stone-300"></span>
+                <span class="w-[1px] h-full bg-stone-300"></span>
+                <span class="w-[5px] h-full bg-stone-300"></span>
+                <span class="w-[2px] h-full bg-stone-300"></span>
+                <span class="w-[3px] h-full bg-stone-300"></span>
+                <span class="w-[1px] h-full bg-stone-300"></span>
+                <span class="w-[4px] h-full bg-stone-300"></span>
+                <span class="w-[2px] h-full bg-stone-300"></span>
+                <span class="w-[4px] h-full bg-stone-300"></span>
+                <span class="w-[1px] h-full bg-stone-300"></span>
+                <span class="w-[3px] h-full bg-stone-300"></span>
+                <span class="w-[2px] h-full bg-stone-300"></span>
+                <span class="w-[5px] h-full bg-stone-300"></span>
+              </div>
+              <span class="font-mono text-[9px] tracking-widest text-stone-400">NO. 2026-1031-SPOOKY-4CUTS</span>
+              
+              <div class="flex items-center justify-between w-full text-[8.5px] text-stone-400 px-1 pt-1 font-mono">
+                <span>PHOTO BOOTH EDITION</span>
+                <span class="text-pumpkin-400">BOOKMARK 1/1</span>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- 右侧：属性调节与装点面板 -->
+    <aside class="w-full lg:w-[410px] bg-midnight-900 rounded-3xl border border-purple-950/80 shadow-xl flex flex-col overflow-hidden max-h-[880px]">
+      
+      <!-- 标签导航 -->
+      <nav class="flex border-b border-purple-950/80 bg-midnight-950/50 p-1.5 gap-1 text-xs sm:text-sm font-medium">
+        <button id="tab-btn-photo" class="flex-1 py-2 rounded-xl text-center transition bg-midnight-800 text-pumpkin-400 border border-purple-900/40 font-semibold flex items-center justify-center gap-1.5" data-tab="photo">
+          <i class="fa-solid fa-sliders"></i>
+          <span data-i18n="tab_photo">照片微调</span>
+        </button>
+        <button id="tab-btn-text" class="flex-1 py-2 rounded-xl text-center text-stone-400 hover:text-stone-200 hover:bg-midnight-800/60 transition flex items-center justify-center gap-1.5" data-tab="text">
+          <i class="fa-regular fa-face-smile"></i>
+          <span data-i18n="tab_text">贴纸印字</span>
+        </button>
+      </nav>
+
+      <!-- 面板滚动容器 -->
+      <div class="flex-1 overflow-y-auto p-4 sm:p-5 space-y-6">
+
+        <!-- TAB 1: 照片微调面板 -->
+        <div id="tab-pane-photo" class="space-y-5">
+          
+          <!-- 双联相纸模式切换条 -->
+          <div class="bg-midnight-850 p-3 rounded-2xl border border-stone-800 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i class="fa-solid fa-file-lines text-pumpkin-400 text-sm"></i>
+              <div>
+                <span class="text-xs font-bold text-stone-200" data-i18n="label_sheet_mode">双联纸张状态</span>
+                <p class="text-[10px] text-stone-400" data-i18n="desc_sheet_mode">模拟真机打印联排，可随时撕开/合拢</p>
+              </div>
+            </div>
+            <button id="btn-tear-sidebar" class="px-3 py-1 rounded-xl bg-pumpkin-950 text-pumpkin-400 border border-pumpkin-500/40 text-xs font-bold hover:bg-pumpkin-900/50 transition">
+              <span id="label-tear-sidebar">撕开相纸</span>
+            </button>
+          </div>
+
+          <!-- 槽位选择切换 -->
+          <div>
+            <label class="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2" data-i18n="label_select_slot">选择要调节的照片格</label>
+            <div class="grid grid-cols-4 gap-2">
+              <button class="slot-select-btn py-2 px-1 rounded-xl border-2 border-pumpkin-500 bg-pumpkin-950/40 text-xs font-bold text-pumpkin-400 transition" data-slot="0" data-i18n="slot_num_1">第 1 格</button>
+              <button class="slot-select-btn py-2 px-1 rounded-xl border-2 border-stone-800 bg-midnight-850 hover:bg-midnight-800 text-xs font-bold text-stone-400 transition" data-slot="1" data-i18n="slot_num_2">第 2 格</button>
+              <button class="slot-select-btn py-2 px-1 rounded-xl border-2 border-stone-800 bg-midnight-850 hover:bg-midnight-800 text-xs font-bold text-stone-400 transition" data-slot="2" data-i18n="slot_num_3">第 3 格</button>
+              <button class="slot-select-btn py-2 px-1 rounded-xl border-2 border-stone-800 bg-midnight-850 hover:bg-midnight-800 text-xs font-bold text-stone-400 transition" data-slot="3" data-i18n="slot_num_4">第 4 格</button>
+            </div>
+          </div>
+
+          <!-- 当前槽位操作 -->
+          <div class="bg-midnight-850/80 p-3.5 rounded-2xl border border-stone-800 space-y-3.5">
+            <div class="flex items-center justify-between">
+              <span id="active-slot-name" class="text-xs font-bold text-stone-300">正在编辑：第 1 格照片</span>
+              <label class="text-xs text-pumpkin-400 font-semibold cursor-pointer hover:underline flex items-center gap-1">
+                <i class="fa-solid fa-upload"></i>
+                <span data-i18n="action_replace">替换当前照片</span>
+                <input id="input-single-slot-photo" type="file" accept="image/*" class="hidden">
+              </label>
+            </div>
+
+            <!-- 缩放滑块 -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-xs">
+                <span class="text-stone-400 flex items-center gap-1.5"><i class="fa-solid fa-magnifying-glass-plus text-stone-500"></i><span data-i18n="label_zoom">大小缩放</span></span>
+                <span id="val-zoom" class="font-mono text-pumpkin-400">100%</span>
+              </div>
+              <input id="slider-zoom" type="range" min="0.5" max="3" step="0.02" value="1" class="w-full accent-pumpkin-500 bg-midnight-950 rounded-lg cursor-pointer">
+            </div>
+
+            <!-- 旋转滑块 -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-xs">
+                <span class="text-stone-400 flex items-center gap-1.5"><i class="fa-solid fa-rotate text-stone-500"></i><span data-i18n="label_rotate">角度微调</span></span>
+                <span id="val-rotate" class="font-mono text-pumpkin-400">0°</span>
+              </div>
+              <input id="slider-rotate" type="range" min="-45" max="45" step="1" value="0" class="w-full accent-pumpkin-500 bg-midnight-950 rounded-lg cursor-pointer">
+            </div>
+
+            <!-- 翻转与复位 -->
+            <div class="flex items-center gap-2 pt-1">
+              <button id="btn-flip-photo" class="flex-1 py-1.5 bg-midnight-800 border border-stone-700 hover:border-pumpkin-500/60 rounded-xl text-xs font-medium text-stone-300 transition flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-arrows-left-right text-xs text-pumpkin-400"></i>
+                <span data-i18n="btn_flip">水平翻转</span>
+              </button>
+              <button id="btn-reset-transform" class="flex-1 py-1.5 bg-midnight-800 border border-stone-700 hover:border-pumpkin-500/60 rounded-xl text-xs font-medium text-stone-300 transition flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-arrow-rotate-left text-xs text-pumpkin-400"></i>
+                <span data-i18n="btn_reset">居中复位</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 万圣照片滤镜 -->
+          <div>
+            <label class="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2.5" data-i18n="label_filters">万圣气氛滤镜</label>
+            <div class="grid grid-cols-3 gap-2 text-xs">
+              <button class="filter-btn p-2 rounded-xl border border-pumpkin-500 bg-pumpkin-950/40 font-semibold text-pumpkin-300 text-center transition" data-filter="filter-original" data-i18n="filter_orig">原图色彩</button>
+              <button class="filter-btn p-2 rounded-xl border border-stone-800 bg-midnight-850 hover:bg-midnight-800 text-stone-400 text-center transition" data-filter="filter-pumpkin" data-i18n="filter_pumpkin">南瓜暖阳</button>
+              <button class="filter-btn p-2 rounded-xl border border-stone-800 bg-midnight-850 hover:bg-midnight-800 text-stone-400 text-center transition" data-filter="filter-vampire" data-i18n="filter_vampire">血夜红影</button>
+              <button class="filter-btn p-2 rounded-xl border border-stone-800 bg-midnight-850 hover:bg-midnight-800 text-stone-400 text-center transition" data-filter="filter-noir" data-i18n="filter_noir">哥特黑白</button>
+              <button class="filter-btn p-2 rounded-xl border border-stone-800 bg-midnight-850 hover:bg-midnight-800 text-stone-400 text-center transition" data-filter="filter-fog" data-i18n="filter_fog">幽夜迷雾</button>
+              <button class="filter-btn p-2 rounded-xl border border-stone-800 bg-midnight-850 hover:bg-midnight-800 text-stone-400 text-center transition" data-filter="filter-ghoul" data-i18n="filter_ghoul">鬼火荧绿</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: 贴纸印字面板 -->
+        <div id="tab-pane-text" class="hidden space-y-5">
+          
+          <!-- 拍立得文字定制 -->
+          <div class="space-y-3">
+            <label class="block text-xs font-bold text-stone-400 uppercase tracking-wider" data-i18n="label_bottom_text">拍立得底部印字</label>
+            
+            <div>
+              <span class="text-xs text-stone-400 mb-1 block" data-i18n="label_main_title">主标题</span>
+              <input id="input-title-text" type="text" value="SPOOKY BOOTH" maxlength="24" class="w-full px-3 py-2 text-xs bg-midnight-950 border border-stone-700 rounded-xl text-stone-200 focus:outline-none focus:border-pumpkin-500">
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <span class="text-xs text-stone-400 mb-1 block" data-i18n="label_date">打卡日期</span>
+                <input id="input-date-text" type="text" value="2026.10.31" maxlength="16" class="w-full px-3 py-2 text-xs bg-midnight-950 border border-stone-700 rounded-xl text-stone-200 focus:outline-none focus:border-pumpkin-500">
+              </div>
+              <div>
+                <span class="text-xs text-stone-400 mb-1 block" data-i18n="label_subtitle">副标文字</span>
+                <input id="input-sub-text" type="text" value="HALLOWEEN EDITION" maxlength="20" class="w-full px-3 py-2 text-xs bg-midnight-950 border border-stone-700 rounded-xl text-stone-200 focus:outline-none focus:border-pumpkin-500">
+              </div>
+            </div>
+          </div>
+
+          <!-- 万圣点缀贴纸 -->
+          <div class="pt-3 border-t border-purple-950/80">
+            <div class="flex items-center justify-between mb-2">
+              <label class="text-xs font-bold text-stone-400 uppercase tracking-wider" data-i18n="label_stickers">万圣贴纸 (点击加入)</label>
+              <button id="btn-clear-stickers" class="text-[11px] text-stone-500 hover:text-red-400 transition" data-i18n="btn_clear_stickers">清空贴纸</button>
+            </div>
+            
+            <div class="grid grid-cols-6 gap-2 text-center text-xl p-2.5 bg-midnight-950 rounded-2xl border border-stone-800">
+              <button class="sticker-btn hover:scale-125 transition p-1" data-emoji="🎃">🎃</button>
+              <button class="sticker-btn hover:scale-125 transition p-1" data-emoji="👻">👻</button>
+              <button class="sticker-btn hover:scale-125 transition p-1" data-emoji="🦇">🦇</button>
+              <button class="sticker-btn hover:scale-125 transition p-1" data-emoji="🕷️">🕷️</button>
+              <button class="sticker-btn hover:scale-125 transition p-1" data-emoji="🍬">🍬</button>
+              <button class="sticker-btn hover:scale-125 transition p-1" data-emoji="🧙‍♀️">🧙‍♀️</button>
+              <button class="sticker-btn hover:scale-125 transition p-1" data-emoji="🕯️">🕯️</button>
+              <button class="sticker-btn hover:scale-125 transition p-1" data-emoji="💀">💀</button>
+              <button class="sticker-btn hover:scale-125 transition p-1" data-emoji="🕸️">🕸️</button>
+              <button class="sticker-btn hover:scale-125 transition p-1" data-emoji="🐈‍⬛">🐈‍⬛</button>
+              <button class="sticker-btn hover:scale-125 transition p-1" data-emoji="🌙">🌙</button>
+              <button class="sticker-btn hover:scale-125 transition p-1" data-emoji="🩸">🩸</button>
+            </div>
+            <p class="text-[11px] text-stone-500 mt-2" data-i18n="tip_sticker_drag">贴纸生成后可随意拖动（鼠标滚轮或双指捏合缩放大小，双击删除）。</p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 底部创作者信息与返图邀请卡片 -->
+      <div class="p-4 bg-midnight-950/80 border-t border-purple-950/80 space-y-2.5">
+        <div class="flex items-center justify-between text-xs">
+          <div class="flex items-center gap-1.5">
+            <span class="text-stone-400" data-i18n="label_creator">制作</span>:
+            <a id="creator-link" href="https://hispooky.lofter.com/" target="_blank" rel="noopener noreferrer" class="text-pumpkin-400 hover:text-pumpkin-300 font-semibold underline underline-offset-2 transition inline-flex items-center gap-0.5">
+              @HiSpooky
+              <i class="fa-solid fa-arrow-up-right-from-square text-[9px] ml-0.5"></i>
+            </a>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="text-stone-400" data-i18n="label_artist">相框绘制</span>:
+            <a href="https://starbaguette.lofter.com/" target="_blank" rel="noopener noreferrer" class="text-witch-400 hover:text-witch-300 font-semibold underline underline-offset-2 transition inline-flex items-center gap-0.5">
+              星驰法棍
+              <i class="fa-solid fa-arrow-up-right-from-square text-[9px] ml-0.5"></i>
+            </a>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-2 text-[11px] text-stone-300 bg-purple-950/40 border border-purple-900/40 rounded-xl p-2.5">
+          <i class="fa-solid fa-camera-retro text-pumpkin-400 mt-0.5 shrink-0 text-xs"></i>
+          <span id="credit-return-note" class="leading-relaxed text-[11px]">
+            欢迎在 LOFTER 搜索 <a href="https://hispooky.lofter.com/" target="_blank" rel="noopener noreferrer" class="text-pumpkin-400 hover:text-pumpkin-300 font-semibold underline underline-offset-2 transition inline-flex items-center gap-0.5">HiSpooky<i class="fa-solid fa-arrow-up-right-from-square text-[9px] ml-0.5"></i></a> 在相关动态下返图
+          </span>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- 导出选项模态弹窗 (Export Modal) -->
+  <div id="export-modal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-200">
+    <div class="bg-midnight-900 border border-stone-700 rounded-3xl p-5 sm:p-6 max-w-md w-full shadow-2xl space-y-4 transform scale-95 transition-transform duration-200">
+      
+      <div class="flex items-center justify-between border-b border-stone-800 pb-3">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-print text-pumpkin-400 text-lg"></i>
+          <h3 class="font-bold text-base text-stone-100" data-i18n="modal_title">选择相片导出方式</h3>
+        </div>
+        <button id="btn-close-modal" class="text-stone-400 hover:text-white text-lg px-2">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-stone-400 leading-relaxed" data-i18n="modal_desc">
+        本适配器忠实还原线下人生四格机器规格，支持原版双联整幅输出，或自动撕开分为相片与书签两张独立高清卡片。
+      </p>
+
+      <div class="space-y-2.5 pt-1">
+        <!-- 选项 1：整版双联合并导出 -->
+        <button id="btn-export-combined" class="w-full p-3.5 rounded-2xl border border-pumpkin-500/50 hover:border-pumpkin-500 bg-pumpkin-950/40 hover:bg-pumpkin-950/70 transition flex items-center justify-between text-left group">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-pumpkin-500/20 text-pumpkin-400 flex items-center justify-center text-lg">
+              <i class="fa-solid fa-clone"></i>
+            </div>
+            <div>
+              <span class="text-xs font-bold text-stone-100 block group-hover:text-pumpkin-300" data-i18n="opt_full_sheet">导出整版双联相纸 (未撕开)</span>
+              <span class="text-[10px] text-stone-400" data-i18n="opt_full_sheet_desc">左侧照片 + 中间齿孔线 + 右侧书签 (冲印大图 1:1)</span>
+            </div>
+          </div>
+          <i class="fa-solid fa-arrow-down-long text-stone-500 group-hover:text-pumpkin-400 transition"></i>
+        </button>
+
+        <!-- 选项 2：分开导出（左右各一张） -->
+        <button id="btn-export-split" class="w-full p-3.5 rounded-2xl border border-stone-700 hover:border-witch-400 bg-midnight-850 hover:bg-midnight-800 transition flex items-center justify-between text-left group">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-witch-500/20 text-witch-400 flex items-center justify-center text-lg">
+              <i class="fa-solid fa-scissors"></i>
+            </div>
+            <div>
+              <span class="text-xs font-bold text-stone-100 block group-hover:text-witch-300" data-i18n="opt_separated">分开导出双卡 (一张相片 + 一张书签)</span>
+              <span class="text-[10px] text-stone-400" data-i18n="opt_separated_desc">自动撕开生成 2 张尺寸完全相同的高清独立卡片</span>
+            </div>
+          </div>
+          <i class="fa-solid fa-download text-stone-500 group-hover:text-witch-400 transition"></i>
+        </button>
+
+        <!-- 选项 3：仅导出左侧照片条 -->
+        <button id="btn-export-left-only" class="w-full p-3 rounded-2xl border border-stone-800 hover:border-stone-600 bg-midnight-950 text-stone-300 hover:text-white transition flex items-center justify-between text-left text-xs font-medium">
+          <span data-i18n="opt_photo_only">仅导出左侧四格照片条 (Single Strip)</span>
+          <i class="fa-solid fa-image text-stone-500"></i>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 隐藏的文件选择器 -->
+  <input id="input-batch-files" type="file" accept="image/*" multiple class="hidden">
+
+  <!-- 自定义吐司提示组件 -->
+  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-stone-900 text-stone-100 px-4 py-2.5 rounded-2xl shadow-xl text-xs sm:text-sm font-medium transition-all duration-300 opacity-0 pointer-events-none transform translate-y-2 flex items-center gap-2 border border-stone-700">
+    <i id="toast-icon" class="fa-solid fa-circle-check text-pumpkin-400"></i>
+    <span id="toast-msg">操作成功</span>
+  </div>
+
+  <script>
+    const i18nData = {
+      zh: {
+        subtitle: "万圣节限定四格双联相纸 · @HiSpooky",
+        btn_tear: "撕开相纸",
+        btn_rejoin: "重新合拢",
+        btn_batch: "导入4张照片",
+        btn_clear: "清空",
+        btn_export: "导出相片",
+        tip_gesture: "左侧四格可拖拽平移，右侧为同尺寸万圣收藏书签",
+        tab_photo: "照片微调",
+        tab_text: "贴纸印字",
+        label_sheet_mode: "双联纸张状态",
+        desc_sheet_mode: "模拟真机打印联排，可随时撕开/合拢",
+        label_select_slot: "选择要调节的照片格",
+        slot_num_1: "第 1 格",
+        slot_num_2: "第 2 格",
+        slot_num_3: "第 3 格",
+        slot_num_4: "第 4 格",
+        slot_prompt_1: "点击上传第 1 格",
+        slot_prompt_2: "点击上传第 2 格",
+        slot_prompt_3: "点击上传第 3 格",
+        slot_prompt_4: "点击上传第 4 格",
+        action_replace: "替换当前照片",
+        label_zoom: "大小缩放",
+        label_rotate: "角度微调",
+        btn_flip: "水平翻转",
+        btn_reset: "居中复位",
+        label_filters: "万圣气氛滤镜",
+        filter_orig: "原图色彩",
+        filter_pumpkin: "南瓜暖阳",
+        filter_vampire: "血夜红影",
+        filter_noir: "哥特黑白",
+        filter_fog: "幽夜迷雾",
+        filter_ghoul: "鬼火荧绿",
+        label_bottom_text: "拍立得底部印字",
+        label_main_title: "主标题",
+        label_date: "打卡日期",
+        label_subtitle: "副标文字",
+        label_stickers: "万圣贴纸 (点击加入)",
+        btn_clear_stickers: "清空贴纸",
+        tip_sticker_drag: "贴纸生成后可随意拖动（鼠标滚轮或双指捏合缩放大小，双击删除）。",
+        label_creator: "制作",
+        label_artist: "相框绘制",
+        return_notice: '欢迎在 LOFTER 搜索 <a href="https://hispooky.lofter.com/" target="_blank" rel="noopener noreferrer" class="text-pumpkin-400 hover:text-pumpkin-300 font-semibold underline underline-offset-2 transition inline-flex items-center gap-0.5">HiSpooky<i class="fa-solid fa-arrow-up-right-from-square text-[9px] ml-0.5"></i></a> 在相关动态下返图',
+        editing_slot_prefix: "正在编辑：第 ",
+        editing_slot_suffix: " 格照片",
+        toast_slot_loaded: "第 {n} 格照片已载入",
+        toast_batch_loaded: "已成功载入 {n} 张照片！",
+        toast_cleared: "已清空所有照片",
+        toast_sticker_added: "贴纸已放置，可随意拖动（双击删除）",
+        toast_stickers_cleared: "所有贴纸已清除",
+        toast_torn: "✂️ 咔嚓！双联相纸已撕开为独立两联",
+        toast_rejoined: "相纸已重新拼合为整版双联",
+        toast_baking: "正在合成冲印级超清万圣相片...",
+        toast_exported: "万圣相片已成功导出并下载！",
+        modal_title: "选择相片导出方式",
+        modal_desc: "本适配器忠实还原线下人生四格机器规格，支持原版双联整幅输出，或自动撕开分为相片与书签两张独立高清卡片。",
+        opt_full_sheet: "导出整版双联相纸 (未撕开)",
+        opt_full_sheet_desc: "左侧照片 + 中间齿孔线 + 右侧书签 (冲印大图 1:1)",
+        opt_separated: "分开导出双卡 (一张相片 + 一张书签)",
+        opt_separated_desc: "自动撕开生成 2 张尺寸完全相同的高清独立卡片",
+        opt_photo_only: "仅导出左侧四格照片条 (Single Strip)"
+      },
+      en: {
+        subtitle: "✦ A Halloween Photo Booth by HiSpooky ✦",
+        btn_tear: "Tear Sheet",
+        btn_rejoin: "Rejoin Sheet",
+        btn_batch: "Import 4 Photos",
+        btn_clear: "Clear",
+        btn_export: "Export Cuts",
+        tip_gesture: "Left: 4-cut photo strip. Right: identical-sized collector bookmark",
+        tab_photo: "Photo Fine-tune",
+        tab_text: "Stickers & Text",
+        label_sheet_mode: "Twin Sheet Perforation",
+        desc_sheet_mode: "Simulates physical booth double prints. Tear or rejoin anytime.",
+        label_select_slot: "SELECT PHOTO SLOT",
+        slot_num_1: "Slot 1",
+        slot_num_2: "Slot 2",
+        slot_num_3: "Slot 3",
+        slot_num_4: "Slot 4",
+        slot_prompt_1: "Click to upload Slot 1",
+        slot_prompt_2: "Click to upload Slot 2",
+        slot_prompt_3: "Click to upload Slot 3",
+        slot_prompt_4: "Click to upload Slot 4",
+        action_replace: "Replace photo",
+        label_zoom: "Scale Zoom",
+        label_rotate: "Rotation",
+        btn_flip: "Flip H",
+        btn_reset: "Reset Pos",
+        label_filters: "SPOOKY FILTERS",
+        filter_orig: "Original",
+        filter_pumpkin: "Pumpkin Glow",
+        filter_vampire: "Vampire Crimson",
+        filter_noir: "Gothic Noir",
+        filter_fog: "Midnight Fog",
+        filter_ghoul: "Ghostly Green",
+        label_bottom_text: "PHOTOSTRIP FOOTER TEXT",
+        label_main_title: "Title Text",
+        label_date: "Date",
+        label_subtitle: "Subtitle",
+        label_stickers: "HALLOWEEN STICKERS (CLICK TO ADD)",
+        btn_clear_stickers: "Clear Stickers",
+        tip_sticker_drag: "Drag stickers freely across the frame. Wheel/pinch to resize, double-click to remove.",
+        label_creator: "Creator",
+        label_artist: "Frame Art",
+        return_notice: 'Feel free to share your cuts on X and mention <a href="https://x.com/HiSpooky2814" target="_blank" rel="noopener noreferrer" class="text-pumpkin-400 hover:text-pumpkin-300 font-semibold underline underline-offset-2 transition inline-flex items-center gap-0.5">@HiSpooky2814<i class="fa-solid fa-arrow-up-right-from-square text-[9px] ml-0.5"></i></a>!',
+        editing_slot_prefix: "Editing: Photo Slot #",
+        editing_slot_suffix: "",
+        toast_slot_loaded: "Photo Slot #{n} loaded",
+        toast_batch_loaded: "Successfully loaded {n} photos!",
+        toast_cleared: "All photos cleared",
+        toast_sticker_added: "Sticker added! Drag to place (double click to remove)",
+        toast_stickers_cleared: "All stickers removed",
+        toast_torn: "✂️ Rip! Double sheet separated into two individual strips",
+        toast_rejoined: "Twin sheet rejoined as one uncut print",
+        toast_baking: "Baking high-resolution spooky photo strip...",
+        toast_exported: "Spooky strip exported and downloaded!",
+        modal_title: "Choose Export Mode",
+        modal_desc: "Simulating authentic physical photo booth prints. Export as one complete double sheet or separated cuts.",
+        opt_full_sheet: "Export Full Twin Sheet (Uncut)",
+        opt_full_sheet_desc: "Left photos + perforation line + right bookmark (1:1 uncut)",
+        opt_separated: "Export Separated Cuts (1 Photo + 1 Bookmark)",
+        opt_separated_desc: "Downloads 2 individual high-res cuts of identical dimensions",
+        opt_photo_only: "Export Left Photo Strip Only"
+      }
+    };
+
+    let currentLang = 'zh';
+
+    const state = {
+      isTorn: false, // 是否已撕开
+      activeSlot: 0,
+      titleText: 'SPOOKY BOOTH',
+      dateText: '2026.10.31',
+      subText: 'HALLOWEEN EDITION',
+      slots: [
+        { img: null, x: 0, y: 0, scale: 1, rotate: 0, flip: false, filter: 'filter-original' },
+        { img: null, x: 0, y: 0, scale: 1, rotate: 0, flip: false, filter: 'filter-original' },
+        { img: null, x: 0, y: 0, scale: 1, rotate: 0, flip: false, filter: 'filter-original' },
+        { img: null, x: 0, y: 0, scale: 1, rotate: 0, flip: false, filter: 'filter-original' },
+      ]
+    };
+
+    // DOM 元素引用
+    const twinSheet = document.getElementById('twin-sheet');
+    const sheetLeft = document.getElementById('sheet-left');
+    const sheetRight = document.getElementById('sheet-right');
+    const tearDivider = document.getElementById('tear-divider');
+    const stickersLayer = document.getElementById('stickers-layer');
+    const slotElements = document.querySelectorAll('.photo-slot');
+    const sliderZoom = document.getElementById('slider-zoom');
+    const sliderRotate = document.getElementById('slider-rotate');
+    const valZoom = document.getElementById('val-zoom');
+    const valRotate = document.getElementById('val-rotate');
+    const activeSlotName = document.getElementById('active-slot-name');
+
+    // 撕开交互控制
+    function setTornState(torn) {
+      state.isTorn = torn;
+      const dict = i18nData[currentLang];
+      const tearIcon = document.getElementById('tear-icon');
+      const tearLabel = document.getElementById('tear-label');
+      const labelTearSidebar = document.getElementById('label-tear-sidebar');
+      const statusBadge = document.getElementById('status-sheet-state');
+
+      if (state.isTorn) {
+        twinSheet.classList.remove('sheet-joined');
+        twinSheet.classList.add('sheet-torn');
+        tearIcon.className = 'fa-solid fa-link text-witch-400';
+        tearLabel.textContent = dict.btn_rejoin;
+        labelTearSidebar.textContent = dict.btn_rejoin;
+        statusBadge.textContent = '✂ TORN CUTS (已撕开独立联)';
+        statusBadge.className = 'text-witch-400';
+        showToast(dict.toast_torn, 'warn');
+      } else {
+        twinSheet.classList.remove('sheet-torn');
+        twinSheet.classList.add('sheet-joined');
+        tearIcon.className = 'fa-solid fa-scissors text-pumpkin-400';
+        tearLabel.textContent = dict.btn_tear;
+        labelTearSidebar.textContent = dict.btn_tear;
+        statusBadge.textContent = '● DOUBLE SHEET (连体版)';
+        statusBadge.className = 'text-pumpkin-400';
+        showToast(dict.toast_rejoined, 'info');
+      }
+    }
+
+    document.getElementById('btn-toggle-tear').addEventListener('click', () => setTornState(!state.isTorn));
+    document.getElementById('btn-tear-sidebar').addEventListener('click', () => setTornState(!state.isTorn));
+    tearDivider.addEventListener('click', () => setTornState(!state.isTorn));
+
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-msg');
+      const toastIcon = document.getElementById('toast-icon');
+
+      toastMsg.textContent = message;
+      if (type === 'success') {
+        toastIcon.className = 'fa-solid fa-circle-check text-pumpkin-400';
+      } else if (type === 'warn') {
+        toastIcon.className = 'fa-solid fa-scissors text-witch-400';
+      } else {
+        toastIcon.className = 'fa-solid fa-circle-info text-stone-300';
+      }
+
+      toast.classList.remove('opacity-0', 'translate-y-2', 'pointer-events-none');
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2', 'pointer-events-none');
+      }, 2400);
+    }
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      const dict = i18nData[lang];
+      document.getElementById('lang-label').textContent = lang === 'zh' ? 'EN' : '中文';
+
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key]) {
+          el.textContent = dict[key];
+        }
+      });
+
+      const returnNoteEl = document.getElementById('credit-return-note');
+      if (returnNoteEl) returnNoteEl.innerHTML = dict.return_notice;
+
+      const creatorLinkEl = document.getElementById('creator-link');
+      if (creatorLinkEl) {
+        creatorLinkEl.href = lang === 'zh' ? 'https://hispooky.lofter.com/' : 'https://archiveofourown.org/users/HiSpooky';
+      }
+
+      activeSlotName.textContent = `${dict.editing_slot_prefix}${state.activeSlot + 1}${dict.editing_slot_suffix}`;
+      document.getElementById('tear-label').textContent = state.isTorn ? dict.btn_rejoin : dict.btn_tear;
+      document.getElementById('label-tear-sidebar').textContent = state.isTorn ? dict.btn_rejoin : dict.btn_tear;
+    }
+
+    document.getElementById('btn-lang-toggle').addEventListener('click', () => {
+      setLanguage(currentLang === 'zh' ? 'en' : 'zh');
+    });
+
+    function updateSlotTransform(index) {
+      const slotData = state.slots[index];
+      const slotEl = slotElements[index];
+      const img = slotEl.querySelector('.slot-content img');
+      if (img) {
+        const flipTransform = slotData.flip ? 'scaleX(-1)' : '';
+        img.style.transform = `translate3d(${slotData.x}px, ${slotData.y}px, 0) scale(${slotData.scale}) rotate(${slotData.rotate}deg) ${flipTransform}`;
+      }
+    }
+
+    function updateSlotVisual(index) {
+      const slotData = state.slots[index];
+      const slotEl = slotElements[index];
+      const contentEl = slotEl.querySelector('.slot-content');
+      const placeholderEl = slotEl.querySelector('.slot-placeholder');
+
+      if (slotData.img) {
+        placeholderEl.style.display = 'none';
+        let img = contentEl.querySelector('img');
+        
+        if (!img || img.dataset.src !== slotData.img.src) {
+          contentEl.innerHTML = '';
+          img = document.createElement('img');
+          img.src = slotData.img.src;
+          img.dataset.src = slotData.img.src;
+          img.alt = `Slot ${index + 1}`;
+          img.className = `w-full h-full object-cover select-none will-change-transform ${slotData.filter}`;
+          img.draggable = false;
+          contentEl.appendChild(img);
+        } else {
+          img.className = `w-full h-full object-cover select-none will-change-transform ${slotData.filter}`;
+        }
+        
+        updateSlotTransform(index);
+      } else {
+        placeholderEl.style.display = 'flex';
+        contentEl.innerHTML = '';
+      }
+
+      if (state.activeSlot === index) {
+        slotEl.classList.add('ring-2', 'ring-pumpkin-500');
+      } else {
+        slotEl.classList.remove('ring-2', 'ring-pumpkin-500');
+      }
+    }
+
+    function renderAllSlots() {
+      for (let i = 0; i < 4; i++) {
+        updateSlotVisual(i);
+      }
+    }
+
+    function selectSlot(index, shouldRerender = true) {
+      state.activeSlot = index;
+      document.querySelectorAll('.slot-select-btn').forEach((btn, i) => {
+        if (i === index) {
+          btn.className = 'slot-select-btn py-2 px-1 rounded-xl border-2 border-pumpkin-500 bg-pumpkin-950/40 text-xs font-bold text-pumpkin-400 transition';
+        } else {
+          btn.className = 'slot-select-btn py-2 px-1 rounded-xl border-2 border-stone-800 bg-midnight-850 hover:bg-midnight-800 text-xs font-bold text-stone-400 transition';
+        }
+      });
+
+      const active = state.slots[index];
+      const dict = i18nData[currentLang];
+      activeSlotName.textContent = `${dict.editing_slot_prefix}${index + 1}${dict.editing_slot_suffix}`;
+      sliderZoom.value = active.scale;
+      valZoom.textContent = `${Math.round(active.scale * 100)}%`;
+      sliderRotate.value = active.rotate;
+      valRotate.textContent = `${active.rotate}°`;
+
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        if (btn.dataset.filter === active.filter) {
+          btn.className = 'filter-btn p-2 rounded-xl border border-pumpkin-500 bg-pumpkin-950/40 font-semibold text-pumpkin-300 text-center transition';
+        } else {
+          btn.className = 'filter-btn p-2 rounded-xl border border-stone-800 bg-midnight-850 hover:bg-midnight-800 text-stone-400 text-center transition';
+        }
+      });
+
+      slotElements.forEach((el, i) => {
+        if (i === index) {
+          el.classList.add('ring-2', 'ring-pumpkin-500');
+        } else {
+          el.classList.remove('ring-2', 'ring-pumpkin-500');
+        }
+      });
+
+      if (shouldRerender) {
+        renderAllSlots();
+      }
+    }
+
+    function setupDragAndZoom() {
+      slotElements.forEach((slotEl, idx) => {
+        let isPointerDown = false;
+        let startX = 0;
+        let startY = 0;
+        let initialX = 0;
+        let initialY = 0;
+        let hasMoved = false;
+        let activeScale = 1;
+
+        const getWrapperScale = () => {
+          const rect = sheetLeft.getBoundingClientRect();
+          return rect.width / (sheetLeft.offsetWidth || 1);
+        };
+
+        slotEl.addEventListener('pointerdown', (e) => {
+          if (e.button !== 0 && e.pointerType === 'mouse') return;
+
+          selectSlot(idx, false);
+          if (!state.slots[idx].img) return;
+
+          isPointerDown = true;
+          hasMoved = false;
+          startX = e.clientX;
+          startY = e.clientY;
+          initialX = state.slots[idx].x;
+          initialY = state.slots[idx].y;
+          activeScale = getWrapperScale() || 1;
+
+          try {
+            slotEl.setPointerCapture(e.pointerId);
+          } catch (err) {}
+
+          e.preventDefault();
+        });
+
+        slotEl.addEventListener('pointermove', (e) => {
+          if (!isPointerDown) return;
+          const dx = (e.clientX - startX) / activeScale;
+          const dy = (e.clientY - startY) / activeScale;
+
+          if (Math.hypot(dx, dy) > 2) hasMoved = true;
+
+          state.slots[idx].x = Math.round(initialX + dx);
+          state.slots[idx].y = Math.round(initialY + dy);
+          updateSlotTransform(idx);
+        });
+
+        const handlePointerEnd = (e) => {
+          if (!isPointerDown) return;
+          isPointerDown = false;
+          try {
+            if (slotEl.hasPointerCapture(e.pointerId)) {
+              slotEl.releasePointerCapture(e.pointerId);
+            }
+          } catch (err) {}
+
+          if (!hasMoved) selectSlot(idx, true);
+        };
+
+        slotEl.addEventListener('pointerup', handlePointerEnd);
+        slotEl.addEventListener('pointercancel', handlePointerEnd);
+
+        slotEl.addEventListener('click', () => {
+          if (!state.slots[idx].img && !hasMoved) {
+            selectSlot(idx, false);
+            document.getElementById('input-single-slot-photo').click();
+          }
+        });
+
+        slotEl.addEventListener('wheel', (e) => {
+          if (!state.slots[idx].img) return;
+          e.preventDefault();
+          selectSlot(idx, false);
+          
+          const delta = e.deltaY < 0 ? 0.08 : -0.08;
+          let newScale = Math.min(Math.max(0.5, state.slots[idx].scale + delta), 3.5);
+          state.slots[idx].scale = parseFloat(newScale.toFixed(2));
+          sliderZoom.value = state.slots[idx].scale;
+          valZoom.textContent = `${Math.round(state.slots[idx].scale * 100)}%`;
+          updateSlotTransform(idx);
+        }, { passive: false });
+      });
+    }
+
+    function loadImageFromFile(file, callback) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => callback(img);
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // 照片导入绑定
+    document.getElementById('input-single-slot-photo').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      loadImageFromFile(file, (img) => {
+        state.slots[state.activeSlot].img = img;
+        state.slots[state.activeSlot].x = 0;
+        state.slots[state.activeSlot].y = 0;
+        state.slots[state.activeSlot].scale = 1;
+        state.slots[state.activeSlot].rotate = 0;
+        selectSlot(state.activeSlot, true);
+        const dict = i18nData[currentLang];
+        showToast(dict.toast_slot_loaded.replace('{n}', state.activeSlot + 1));
+      });
+      e.target.value = '';
+    });
+
+    document.getElementById('btn-batch-upload').addEventListener('click', () => {
+      document.getElementById('input-batch-files').click();
+    });
+
+    document.getElementById('input-batch-files').addEventListener('change', (e) => {
+      const files = Array.from(e.target.files).slice(0, 4);
+      if (files.length === 0) return;
+
+      let loadedCount = 0;
+      files.forEach((file, idx) => {
+        loadImageFromFile(file, (img) => {
+          state.slots[idx].img = img;
+          state.slots[idx].x = 0;
+          state.slots[idx].y = 0;
+          state.slots[idx].scale = 1;
+          state.slots[idx].rotate = 0;
+          loadedCount++;
+          if (loadedCount === files.length) {
+            renderAllSlots();
+            const dict = i18nData[currentLang];
+            showToast(dict.toast_batch_loaded.replace('{n}', loadedCount));
+          }
+        });
+      });
+      e.target.value = '';
+    });
+
+    document.getElementById('btn-clear-all').addEventListener('click', () => {
+      state.slots.forEach(s => {
+        s.img = null;
+        s.x = 0;
+        s.y = 0;
+        s.scale = 1;
+        s.rotate = 0;
+        s.flip = false;
+      });
+      renderAllSlots();
+      showToast(i18nData[currentLang].toast_cleared, 'info');
+    });
+
+    sliderZoom.addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value);
+      state.slots[state.activeSlot].scale = val;
+      valZoom.textContent = `${Math.round(val * 100)}%`;
+      updateSlotTransform(state.activeSlot);
+    });
+
+    sliderRotate.addEventListener('input', (e) => {
+      const val = parseInt(e.target.value, 10);
+      state.slots[state.activeSlot].rotate = val;
+      valRotate.textContent = `${val}°`;
+      updateSlotTransform(state.activeSlot);
+    });
+
+    document.getElementById('btn-flip-photo').addEventListener('click', () => {
+      state.slots[state.activeSlot].flip = !state.slots[state.activeSlot].flip;
+      updateSlotTransform(state.activeSlot);
+    });
+
+    document.getElementById('btn-reset-transform').addEventListener('click', () => {
+      const slot = state.slots[state.activeSlot];
+      slot.x = 0;
+      slot.y = 0;
+      slot.scale = 1;
+      slot.rotate = 0;
+      sliderZoom.value = 1;
+      valZoom.textContent = '100%';
+      sliderRotate.value = 0;
+      valRotate.textContent = '0°';
+      updateSlotTransform(state.activeSlot);
+    });
+
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const filterName = btn.dataset.filter;
+        state.slots[state.activeSlot].filter = filterName;
+        document.querySelectorAll('.filter-btn').forEach(b => {
+          b.className = 'filter-btn p-2 rounded-xl border border-stone-800 bg-midnight-850 hover:bg-midnight-800 text-stone-400 text-center transition';
+        });
+        btn.className = 'filter-btn p-2 rounded-xl border border-pumpkin-500 bg-pumpkin-950/40 font-semibold text-pumpkin-300 text-center transition';
+        updateSlotVisual(state.activeSlot);
+      });
+    });
+
+    // 标签页切换
+    const tabBtns = document.querySelectorAll('nav button[data-tab]');
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tab = btn.dataset.tab;
+        tabBtns.forEach(b => {
+          b.className = 'flex-1 py-2 rounded-xl text-center text-stone-400 hover:text-stone-200 hover:bg-midnight-800/60 transition flex items-center justify-center gap-1.5';
+        });
+        btn.className = 'flex-1 py-2 rounded-xl text-center transition bg-midnight-800 text-pumpkin-400 border border-purple-900/40 font-semibold flex items-center justify-center gap-1.5';
+
+        document.getElementById('tab-pane-photo').classList.add('hidden');
+        document.getElementById('tab-pane-text').classList.add('hidden');
+        document.getElementById(`tab-pane-${tab}`).classList.remove('hidden');
+      });
+    });
+
+    document.querySelectorAll('.slot-select-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        selectSlot(parseInt(btn.dataset.slot, 10), true);
+      });
+    });
+
+    // 印字输入绑定
+    const inputTitleText = document.getElementById('input-title-text');
+    const inputDateText = document.getElementById('input-date-text');
+    const inputSubText = document.getElementById('input-sub-text');
+
+    inputTitleText.addEventListener('input', (e) => {
+      state.titleText = e.target.value;
+      document.getElementById('display-title').textContent = e.target.value || 'SPOOKY BOOTH';
+    });
+
+    inputDateText.addEventListener('input', (e) => {
+      state.dateText = e.target.value;
+      document.getElementById('display-date').textContent = e.target.value || '2026.10.31';
+    });
+
+    inputSubText.addEventListener('input', (e) => {
+      state.subText = e.target.value;
+      document.getElementById('display-sub').textContent = e.target.value || 'HALLOWEEN EDITION';
+    });
+
+    // 贴纸逻辑
+    document.querySelectorAll('.sticker-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        addSticker(btn.dataset.emoji);
+      });
+    });
+
+    function addSticker(emoji) {
+      const stickerEl = document.createElement('div');
+      stickerEl.className = 'sticker-item group absolute select-none text-2xl z-30 pointer-events-auto p-1.5 rounded-full hover:bg-white/10 active:bg-white/20 will-change-transform';
+      stickerEl.dataset.emoji = emoji;
+      stickerEl.dataset.scale = '1';
+
+      const emojiSpan = document.createElement('span');
+      emojiSpan.className = 'emoji-content block leading-none select-none pointer-events-none transform origin-center transition-transform duration-75';
+      emojiSpan.textContent = emoji;
+      stickerEl.appendChild(emojiSpan);
+
+      const resizeHandle = document.createElement('div');
+      resizeHandle.className = 'absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-pumpkin-500/80 border border-stone-900 text-[8px] text-stone-950 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none';
+      resizeHandle.innerHTML = '<i class="fa-solid fa-up-right-and-down-left-from-center scale-75"></i>';
+      stickerEl.appendChild(resizeHandle);
+
+      stickerEl.title = currentLang === 'zh' ? "拖动位移，滚轮缩放，双击删除" : "Drag to move, wheel to resize, double-click to delete";
+
+      let currentX = Math.max(20, (sheetLeft.offsetWidth / 2) - 18);
+      let currentY = Math.max(20, (sheetLeft.offsetHeight / 2) - 18);
+      stickerEl.style.left = `${currentX}px`;
+      stickerEl.style.top = `${currentY}px`;
+
+      let isDragging = false;
+      let startPointerX = 0;
+      let startPointerY = 0;
+      let initialLeft = 0;
+      let initialTop = 0;
+      let activeScale = 1;
+      let currentScale = 1;
+
+      let activeTouches = new Map();
+      let initialPinchDistance = 0;
+      let scaleAtPinchStart = 1;
+
+      const getWrapperScale = () => {
+        const rect = sheetLeft.getBoundingClientRect();
+        return rect.width / (sheetLeft.offsetWidth || 1);
+      };
+
+      const updateScaleVisual = () => {
+        emojiSpan.style.transform = `scale(${currentScale})`;
+        stickerEl.dataset.scale = currentScale.toString();
+      };
+
+      stickerEl.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const delta = e.deltaY < 0 ? 0.08 : -0.08;
+        currentScale = Math.min(Math.max(0.4, currentScale + delta), 3.5);
+        currentScale = parseFloat(currentScale.toFixed(2));
+        updateScaleVisual();
+      }, { passive: false });
+
+      stickerEl.addEventListener('pointerdown', (e) => {
+        if (e.button !== 0 && e.pointerType === 'mouse') return;
+        activeTouches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+        if (activeTouches.size === 1) {
+          isDragging = true;
+          startPointerX = e.clientX;
+          startPointerY = e.clientY;
+          initialLeft = stickerEl.offsetLeft;
+          initialTop = stickerEl.offsetTop;
+          activeScale = getWrapperScale() || 1;
+        } else if (activeTouches.size === 2) {
+          isDragging = false;
+          const points = Array.from(activeTouches.values());
+          initialPinchDistance = Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y);
+          scaleAtPinchStart = currentScale;
+        }
+
+        try {
+          stickerEl.setPointerCapture(e.pointerId);
+        } catch (err) {}
+
+        e.stopPropagation();
+        e.preventDefault();
+      });
+
+      stickerEl.addEventListener('pointermove', (e) => {
+        if (activeTouches.has(e.pointerId)) {
+          activeTouches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        }
+
+        if (activeTouches.size === 2) {
+          const points = Array.from(activeTouches.values());
+          const currentDistance = Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y);
+          if (initialPinchDistance > 5) {
+            const ratio = currentDistance / initialPinchDistance;
+            currentScale = Math.min(Math.max(0.4, scaleAtPinchStart * ratio), 3.5);
+            currentScale = parseFloat(currentScale.toFixed(2));
+            updateScaleVisual();
+          }
+          return;
+        }
+
+        if (!isDragging) return;
+        const dx = (e.clientX - startPointerX) / activeScale;
+        const dy = (e.clientY - startPointerY) / activeScale;
+        stickerEl.style.left = `${initialLeft + dx}px`;
+        stickerEl.style.top = `${initialTop + dy}px`;
+      });
+
+      const handlePointerUp = (e) => {
+        activeTouches.delete(e.pointerId);
+        if (activeTouches.size === 0) isDragging = false;
+        try {
+          if (stickerEl.hasPointerCapture(e.pointerId)) {
+            stickerEl.releasePointerCapture(e.pointerId);
+          }
+        } catch (err) {}
+      };
+
+      stickerEl.addEventListener('pointerup', handlePointerUp);
+      stickerEl.addEventListener('pointercancel', handlePointerUp);
+
+      stickerEl.addEventListener('dblclick', (e) => {
+        e.stopPropagation();
+        stickerEl.remove();
+        showToast(currentLang === 'zh' ? '贴纸已移除' : 'Sticker removed', 'info');
+      });
+
+      stickersLayer.appendChild(stickerEl);
+      showToast(i18nData[currentLang].toast_sticker_added);
+    }
+
+    document.getElementById('btn-clear-stickers').addEventListener('click', () => {
+      stickersLayer.innerHTML = '';
+      showToast(i18nData[currentLang].toast_stickers_cleared, 'info');
+    });
+
+    // 滤镜渲染器
+    function applyFilterToContext(ctx, filterClass) {
+      switch (filterClass) {
+        case 'filter-noir':
+          ctx.filter = 'grayscale(100%) contrast(145%) brightness(92%)';
+          break;
+        case 'filter-pumpkin':
+          ctx.filter = 'sepia(35%) saturate(140%) contrast(110%) hue-rotate(-12deg)';
+          break;
+        case 'filter-vampire':
+          ctx.filter = 'contrast(130%) saturate(135%) brightness(90%)';
+          break;
+        case 'filter-fog':
+          ctx.filter = 'contrast(90%) brightness(105%) saturate(70%) hue-rotate(180deg)';
+          break;
+        case 'filter-ghoul':
+          ctx.filter = 'hue-rotate(85deg) saturate(130%) contrast(115%) brightness(96%)';
+          break;
+        default:
+          ctx.filter = 'none';
+          break;
+      }
+    }
+
+    // ================= 导出模态框与 Canvas 渲染引擎 =================
+    const exportModal = document.getElementById('export-modal');
+    const btnExportMenu = document.getElementById('btn-export-menu');
+    const btnCloseModal = document.getElementById('btn-close-modal');
+
+    btnExportMenu.addEventListener('click', () => {
+      exportModal.classList.remove('opacity-0', 'pointer-events-none');
+      exportModal.querySelector('div').classList.remove('scale-95');
+    });
+
+    btnCloseModal.addEventListener('click', () => {
+      exportModal.classList.add('opacity-0', 'pointer-events-none');
+      exportModal.querySelector('div').classList.add('scale-95');
+    });
+
+    exportModal.addEventListener('click', (e) => {
+      if (e.target === exportModal) btnCloseModal.click();
+    });
+
+    // 核心渲染：渲染单张相片条 (Left Strip)
+    function renderPhotoStripCanvas(exportScale = 4) {
+      const leftRect = sheetLeft.getBoundingClientRect();
+      const canvas = document.createElement('canvas');
+      canvas.width = leftRect.width * exportScale;
+      canvas.height = leftRect.height * exportScale;
+      const ctx = canvas.getContext('2d');
+
+      // 背景
+      ctx.fillStyle = '#0d0914';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // 4 格照片
+      for (let i = 0; i < 4; i++) {
+        const slot = state.slots[i];
+        const slotEl = slotElements[i];
+        const slotRect = slotEl.getBoundingClientRect();
+
+        const slotCanvasX = (slotRect.left - leftRect.left) * exportScale;
+        const slotCanvasY = (slotRect.top - leftRect.top) * exportScale;
+        const slotCanvasW = slotRect.width * exportScale;
+        const slotCanvasH = slotRect.height * exportScale;
+        const radius = 8 * exportScale;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(slotCanvasX, slotCanvasY, slotCanvasW, slotCanvasH, radius);
+        ctx.clip();
+
+        ctx.fillStyle = '#181228';
+        ctx.fillRect(slotCanvasX, slotCanvasY, slotCanvasW, slotCanvasH);
+
+        if (slot.img) {
+          applyFilterToContext(ctx, slot.filter);
+          ctx.save();
+          const centerX = slotCanvasX + slotCanvasW / 2 + slot.x * exportScale;
+          const centerY = slotCanvasY + slotCanvasH / 2 + slot.y * exportScale;
+          ctx.translate(centerX, centerY);
+          ctx.rotate((slot.rotate * Math.PI) / 180);
+          if (slot.flip) ctx.scale(-1, 1);
+          ctx.scale(slot.scale, slot.scale);
+
+          const imgAspect = slot.img.width / slot.img.height;
+          const slotAspect = slotCanvasW / slotCanvasH;
+          let drawW, drawH;
+          if (imgAspect > slotAspect) {
+            drawH = slotCanvasH;
+            drawW = slotCanvasH * imgAspect;
+          } else {
+            drawW = slotCanvasW;
+            drawH = slotCanvasW / imgAspect;
+          }
+
+          ctx.drawImage(slot.img, -drawW / 2, -drawH / 2, drawW, drawH);
+          ctx.restore();
+        }
+        ctx.restore();
+      }
+
+      // 相框边框
+      ctx.save();
+      ctx.strokeStyle = 'rgba(234, 88, 12, 0.4)';
+      ctx.lineWidth = 1.5 * exportScale;
+      ctx.setLineDash([6 * exportScale, 3 * exportScale]);
+      ctx.strokeRect(6 * exportScale, 6 * exportScale, canvas.width - 12 * exportScale, canvas.height - 12 * exportScale);
+      ctx.restore();
+
+      // 拍立得文字
+      const footerEl = document.getElementById('photostrip-footer');
+      const footerRect = footerEl.getBoundingClientRect();
+
+      ctx.save();
+      ctx.fillStyle = '#fb923c';
+      ctx.textAlign = 'center';
+      ctx.font = `bold ${12 * exportScale}px Cinzel, serif`;
+      ctx.fillText(state.titleText, canvas.width / 2, (footerRect.top - leftRect.top + 16) * exportScale);
+
+      ctx.font = `500 ${8.5 * exportScale}px Inter, monospace`;
+      ctx.fillStyle = '#a8a29e';
+      const subLine = `${state.dateText}  ✦  ${state.subText}`;
+      ctx.fillText(subLine, canvas.width / 2, (footerRect.top - leftRect.top + 27) * exportScale);
+      ctx.restore();
+
+      // 贴纸层
+      const stickerDoms = stickersLayer.querySelectorAll('.sticker-item');
+      stickerDoms.forEach(s => {
+        const sRect = s.getBoundingClientRect();
+        const sScale = parseFloat(s.dataset.scale || '1');
+        const sEmoji = s.dataset.emoji || s.querySelector('.emoji-content')?.textContent || '🎃';
+        const sCenterX = (sRect.left - leftRect.left + sRect.width / 2) * exportScale;
+        const sCenterY = (sRect.top - leftRect.top + sRect.height / 2) * exportScale;
+        
+        ctx.save();
+        ctx.translate(sCenterX, sCenterY);
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = `${Math.round(22 * sScale * exportScale)}px "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
+        ctx.fillText(sEmoji, 0, 0);
+        ctx.restore();
+      });
+
+      return canvas;
+    }
+
+    // 核心渲染：渲染单张书签条 (Right Bookmark Strip)
+    function renderBookmarkCanvas(exportScale = 4) {
+      const rightRect = sheetRight.getBoundingClientRect();
+      const canvas = document.createElement('canvas');
+      canvas.width = rightRect.width * exportScale;
+      canvas.height = rightRect.height * exportScale;
+      const ctx = canvas.getContext('2d');
+
+      // 书签深紫夜色底
+      ctx.fillStyle = '#0f0b18';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // 书签紫橙虚线外框
+      ctx.save();
+      ctx.strokeStyle = 'rgba(168, 85, 247, 0.4)';
+      ctx.lineWidth = 1.5 * exportScale;
+      ctx.setLineDash([4 * exportScale, 4 * exportScale]);
+      ctx.strokeRect(6 * exportScale, 6 * exportScale, canvas.width - 12 * exportScale, canvas.height - 12 * exportScale);
+      ctx.restore();
+
+      // 顶部限量版标识与大标题
+      ctx.save();
+      ctx.textAlign = 'center';
+      
+      // Tag
+      ctx.font = `bold ${8 * exportScale}px VT323, monospace`;
+      ctx.fillStyle = '#fb923c';
+      ctx.fillText("● LIMITED BOOKMARK #0831 ●", canvas.width / 2, 28 * exportScale);
+
+      // Spooky Tales 标题
+      ctx.font = `bold ${22 * exportScale}px Creepster, cursive`;
+      ctx.fillStyle = '#fb923c';
+      ctx.fillText("Spooky Tales", canvas.width / 2, 54 * exportScale);
+
+      ctx.font = `bold ${8 * exportScale}px Cinzel, serif`;
+      ctx.fillStyle = '#c084fc';
+      ctx.fillText("COLLECTORS HALLOWEEN TICKET", canvas.width / 2, 68 * exportScale);
+      ctx.restore();
+
+      // 中部：插画展区大南瓜与暗夜圆月
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height * 0.45;
+
+      ctx.save();
+      // 光晕圆圈
+      const grad = ctx.createRadialGradient(centerX, centerY, 10 * exportScale, centerX, centerY, 60 * exportScale);
+      grad.addColorStop(0, 'rgba(249, 115, 22, 0.25)');
+      grad.addColorStop(1, 'rgba(147, 51, 234, 0.02)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 60 * exportScale, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 南瓜 Emoji 图腾
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = `${52 * exportScale}px "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
+      ctx.fillText("🎃", centerX, centerY - 6 * exportScale);
+
+      // 配套文字
+      ctx.font = `bold ${11 * exportScale}px Cinzel, serif`;
+      ctx.fillStyle = '#e7e5e4';
+      ctx.fillText("TRICK OR TREAT", centerX, centerY + 36 * exportScale);
+
+      ctx.font = `500 ${8 * exportScale}px VT323, monospace`;
+      ctx.fillStyle = '#a8a29e';
+      ctx.fillText("UNDER THE BLOOD MOON", centerX, centerY + 48 * exportScale);
+      ctx.restore();
+
+      // 寄语引文
+      ctx.save();
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+      ctx.roundRect(24 * exportScale, canvas.height * 0.68, canvas.width - 48 * exportScale, 40 * exportScale, 8 * exportScale);
+      ctx.fill();
+
+      ctx.textAlign = 'center';
+      ctx.font = `italic ${9 * exportScale}px Inter, sans-serif`;
+      ctx.fillStyle = '#d6d3d1';
+      ctx.fillText("“Keep the spirits close,", canvas.width / 2, canvas.height * 0.68 + 16 * exportScale);
+      ctx.fillText("and your memories closer.”", canvas.width / 2, canvas.height * 0.68 + 28 * exportScale);
+      ctx.restore();
+
+      // 底部：收据条形码
+      const barY = canvas.height - 58 * exportScale;
+      const barH = 20 * exportScale;
+      ctx.save();
+      ctx.fillStyle = '#d6d3d1';
+      const bars = [3, 1, 4, 2, 1, 5, 2, 3, 1, 4, 2, 4, 1, 3, 2, 5];
+      let startBarX = canvas.width / 2 - (bars.reduce((a, b) => a + b + 1.5, 0) * exportScale) / 2;
+      bars.forEach(bw => {
+        ctx.fillRect(startBarX, barY, bw * exportScale, barH);
+        startBarX += (bw + 1.5) * exportScale;
+      });
+
+      ctx.textAlign = 'center';
+      ctx.font = `500 ${8 * exportScale}px VT323, monospace`;
+      ctx.fillStyle = '#78716c';
+      ctx.fillText("NO. 2026-1031-SPOOKY-4CUTS", canvas.width / 2, barY + barH + 11 * exportScale);
+
+      ctx.font = `500 ${7.5 * exportScale}px VT323, monospace`;
+      ctx.fillText("PHOTO BOOTH EDITION  ✦  BOOKMARK 1/1", canvas.width / 2, barY + barH + 20 * exportScale);
+      ctx.restore();
+
+      return canvas;
+    }
+
+    function downloadDataUrl(dataUrl, filename) {
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = dataUrl;
+      link.click();
+    }
+
+    // 1. 导出整版双联（未撕开，合并中间齿孔）
+    document.getElementById('btn-export-combined').addEventListener('click', () => {
+      btnCloseModal.click();
+      showToast(i18nData[currentLang].toast_baking, 'info');
+
+      setTimeout(() => {
+        const exportScale = 4;
+        const photoCanvas = renderPhotoStripCanvas(exportScale);
+        const bookmarkCanvas = renderBookmarkCanvas(exportScale);
+        const tearGap = 12 * exportScale; // 中间齿孔间隔
+
+        const fullCanvas = document.createElement('canvas');
+        fullCanvas.width = photoCanvas.width + tearGap + bookmarkCanvas.width;
+        fullCanvas.height = photoCanvas.height;
+        const ctx = fullCanvas.getContext('2d');
+
+        // 深黑底
+        ctx.fillStyle = '#0a0812';
+        ctx.fillRect(0, 0, fullCanvas.width, fullCanvas.height);
+
+        // 贴左联
+        ctx.drawImage(photoCanvas, 0, 0);
+
+        // 中间绘制真实冲印齿孔线
+        const tearX = photoCanvas.width + tearGap / 2;
+        ctx.save();
+        ctx.fillStyle = '#1c1917';
+        for (let y = 10 * exportScale; y < fullCanvas.height - 10 * exportScale; y += 8 * exportScale) {
+          ctx.beginPath();
+          ctx.arc(tearX, y, 1.8 * exportScale, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+
+        // 贴右联书签
+        ctx.drawImage(bookmarkCanvas, photoCanvas.width + tearGap, 0);
+
+        downloadDataUrl(fullCanvas.toDataURL('image/png', 0.96), `SpookyBooth_FullDoubleSheet_${Date.now()}.png`);
+        showToast(i18nData[currentLang].toast_exported, 'success');
+      }, 100);
+    });
+
+    // 2. 分开导出双份独立卡片（一张照片 + 一张书签）
+    document.getElementById('btn-export-split').addEventListener('click', () => {
+      btnCloseModal.click();
+      showToast(i18nData[currentLang].toast_baking, 'info');
+
+      setTimeout(() => {
+        const exportScale = 4;
+        const photoCanvas = renderPhotoStripCanvas(exportScale);
+        const bookmarkCanvas = renderBookmarkCanvas(exportScale);
+
+        // 下载照片条
+        downloadDataUrl(photoCanvas.toDataURL('image/png', 0.96), `SpookyBooth_1_PhotoStrip_${Date.now()}.png`);
+
+        // 延迟触发第二张下载以避免浏览器阻拦多文件下载
+        setTimeout(() => {
+          downloadDataUrl(bookmarkCanvas.toDataURL('image/png', 0.96), `SpookyBooth_2_Bookmark_${Date.now()}.png`);
+          showToast(i18nData[currentLang].toast_exported, 'success');
+        }, 350);
+      }, 100);
+    });
+
+    // 3. 仅导出单张照片条
+    document.getElementById('btn-export-left-only').addEventListener('click', () => {
+      btnCloseModal.click();
+      showToast(i18nData[currentLang].toast_baking, 'info');
+      setTimeout(() => {
+        const photoCanvas = renderPhotoStripCanvas(4);
+        downloadDataUrl(photoCanvas.toDataURL('image/png', 0.96), `SpookyBooth_PhotoStrip_${Date.now()}.png`);
+        showToast(i18nData[currentLang].toast_exported, 'success');
+      }, 100);
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      setupDragAndZoom();
+      selectSlot(0);
+      setLanguage('zh');
+    });
+  </script>
+</body>
+</html>
