@@ -131,6 +131,30 @@
       background-size: 8px 10px;
       background-repeat: repeat-y;
     }
+
+    /* 线下快照机机械吐纸口与出纸动画 */
+    @keyframes dispenseSlideOut {
+      0% {
+        transform: translateY(-82%) scale(0.96);
+        opacity: 0;
+      }
+      25% {
+        opacity: 1;
+      }
+      82% {
+        transform: translateY(0) scale(1);
+      }
+      90% {
+        transform: translateY(-6px) scale(1);
+      }
+      100% {
+        transform: translateY(0) scale(1);
+      }
+    }
+    .anim-dispense {
+      animation: dispenseSlideOut 1.45s cubic-bezier(0.25, 1, 0.38, 1) forwards;
+      will-change: transform, opacity;
+    }
   </style>
 </head>
 <body class="bg-midnight-950 text-stone-200 antialiased min-h-screen flex flex-col font-sans selection:bg-pumpkin-500 selection:text-white">
@@ -196,7 +220,7 @@
 
       <!-- 撕开状态小徽章提示 -->
       <div class="absolute top-4 right-4 z-30 flex items-center gap-2 bg-midnight-850/90 backdrop-blur px-3 py-1.5 rounded-xl text-xs font-mono text-pumpkin-400 shadow-md border border-stone-800">
-        <span id="status-sheet-state">● DOUBLE SHEET (连体版)</span>
+        <span id="status-sheet-state">● 连体版</span>
       </div>
 
       <!-- 核心双联相纸卡片外层容器 (Twin Strip Container) -->
@@ -275,7 +299,7 @@
 
             <!-- 左联底部拍立得文字区 -->
             <div id="photostrip-footer" class="mt-3 pt-2 pb-1 flex flex-col items-center justify-center text-center relative z-20">
-              <span id="display-title" class="font-serif text-[12px] tracking-widest font-bold uppercase text-pumpkin-400 leading-tight">SPOOKY BOOTH</span>
+              <span id="display-title" class="font-spooky text-[16px] sm:text-[18px] tracking-wider font-bold uppercase text-pumpkin-400 leading-none py-0.5">SPOOKY BOOTH</span>
               <div class="flex items-center gap-2 mt-0.5 text-[8.5px] tracking-wider text-stone-400 font-mono">
                 <span id="display-date">2026.10.31</span>
                 <span class="text-pumpkin-500">✦</span>
@@ -290,8 +314,8 @@
             <!-- 齿孔打孔点点 -->
             <div class="w-full h-full tear-perforation flex flex-col items-center justify-between py-2 pointer-events-none">
               <i class="fa-solid fa-scissors text-[9px] text-pumpkin-500/70 -rotate-90"></i>
-              <span class="text-[8px] font-mono text-stone-500 tracking-tighter uppercase [writing-mode:vertical-lr] my-auto opacity-70 group-hover:opacity-100 group-hover:text-pumpkin-400 transition">
-                TEAR HERE ✂ 易撕线
+              <span id="tear-divider-text" class="text-[8px] font-mono text-stone-500 tracking-tighter uppercase [writing-mode:vertical-lr] my-auto opacity-70 group-hover:opacity-100 group-hover:text-pumpkin-400 transition">
+                ✂ 易撕线
               </span>
               <i class="fa-solid fa-scissors text-[9px] text-pumpkin-500/70 -rotate-90"></i>
             </div>
@@ -610,8 +634,8 @@
               <i class="fa-solid fa-clone"></i>
             </div>
             <div>
-              <span class="text-xs font-bold text-stone-100 block group-hover:text-pumpkin-300" data-i18n="opt_full_sheet">导出整版双联相纸 (未撕开)</span>
-              <span class="text-[10px] text-stone-400" data-i18n="opt_full_sheet_desc">左侧照片 + 中间齿孔线 + 右侧书签 (冲印大图 1:1)</span>
+              <span class="text-xs font-bold text-stone-100 block group-hover:text-pumpkin-300" data-i18n="opt_full_sheet">导出整版双联相纸</span>
+              <span class="text-[10px] text-stone-400" data-i18n="opt_full_sheet_desc">左侧照片 + 中间齿孔线 + 右侧书签</span>
             </div>
           </div>
           <i class="fa-solid fa-arrow-down-long text-stone-500 group-hover:text-pumpkin-400 transition"></i>
@@ -624,8 +648,8 @@
               <i class="fa-solid fa-scissors"></i>
             </div>
             <div>
-              <span class="text-xs font-bold text-stone-100 block group-hover:text-witch-300" data-i18n="opt_separated">分开导出双卡 (一张相片 + 一张书签)</span>
-              <span class="text-[10px] text-stone-400" data-i18n="opt_separated_desc">自动撕开生成 2 张尺寸完全相同的高清独立卡片</span>
+              <span class="text-xs font-bold text-stone-100 block group-hover:text-witch-300" data-i18n="opt_separated">分开导出独立双卡</span>
+              <span class="text-[10px] text-stone-400" data-i18n="opt_separated_desc">自动裁切为两张等大卡片：一张相片与一张书签</span>
             </div>
           </div>
           <i class="fa-solid fa-download text-stone-500 group-hover:text-witch-400 transition"></i>
@@ -633,11 +657,54 @@
 
         <!-- 选项 3：仅导出左侧照片条 -->
         <button id="btn-export-left-only" class="w-full p-3 rounded-2xl border border-stone-800 hover:border-stone-600 bg-midnight-950 text-stone-300 hover:text-white transition flex items-center justify-between text-left text-xs font-medium">
-          <span data-i18n="opt_photo_only">仅导出左侧四格照片条 (Single Strip)</span>
+          <span data-i18n="opt_photo_only">仅导出左侧四格相片</span>
           <i class="fa-solid fa-image text-stone-500"></i>
         </button>
       </div>
 
+    </div>
+  </div>
+
+  <!-- 线下快照机吐纸动画仿真组件 (Simulated Photo Booth Dispenser) -->
+  <div id="dispenser-overlay" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+    <div class="relative w-full max-w-sm sm:max-w-md bg-stone-900 border-2 border-stone-700/80 rounded-3xl p-5 shadow-2xl flex flex-col items-center overflow-hidden">
+      <!-- 机器顶部状态栏与闪烁霓虹信号灯 -->
+      <div class="w-full flex items-center justify-between border-b border-stone-800 pb-3 mb-4">
+        <div class="flex items-center gap-2.5">
+          <span class="w-2.5 h-2.5 rounded-full bg-pumpkin-500 animate-ping"></span>
+          <span id="dispenser-status-text" class="font-mono text-xs font-bold text-pumpkin-400 tracking-wider">
+            ✦ 胶片冲印出纸中... ✦
+          </span>
+        </div>
+        <button id="btn-close-dispenser" class="text-stone-400 hover:text-white text-xs px-2 py-1 rounded-lg hover:bg-stone-800 transition flex items-center gap-1" title="关闭">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+
+      <!-- 机械出纸口狭缝结构 (Mechanical Ejection Slit) -->
+      <div class="w-full relative flex flex-col items-center">
+        <!-- 金属狭缝凹槽 -->
+        <div class="w-11/12 h-3.5 bg-black rounded-full border-2 border-stone-700 shadow-inner flex items-center justify-center z-20 relative">
+          <div class="w-full h-1 bg-stone-950 rounded-full shadow-inner"></div>
+        </div>
+
+        <!-- 吐纸滑道与舞台 (Card Stage) -->
+        <div class="w-full h-[370px] overflow-hidden relative flex justify-center pt-1">
+          <div id="dispensed-card-stage" class="relative z-10 flex justify-center">
+            <div id="dispensed-preview-container" class="rounded-xl overflow-hidden shadow-2xl border border-stone-700/90 bg-midnight-950 p-1 flex items-center justify-center">
+              <!-- 这里动态装入刚刚合成完成的照片 -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 底部趣味提示 -->
+      <div class="mt-3 text-center">
+        <p class="text-[11px] font-mono text-stone-400 flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-hand-holding-heart text-pumpkin-400"></i>
+          <span id="dispenser-take-hint">相片已滑入取纸槽，正在自动保存至本地...</span>
+        </p>
+      </div>
     </div>
   </div>
 
@@ -657,9 +724,11 @@
         btn_tear: "撕开相纸",
         btn_rejoin: "重新合拢",
         btn_batch: "导入4张照片",
+        btn_batch_short: "导入",
         btn_clear: "清空",
         btn_export: "导出相片",
-        tip_gesture: "左侧四格可随意拖动平移找角度，支持滚轮大幅度缩放",
+        tip_gesture: "左侧四格可拖拽平移，右侧为同尺寸万圣收藏书签",
+        tip_gesture_mobile: "单格可拖拽平移 · 滚轮缩放",
         tab_photo: "照片微调",
         tab_text: "贴纸印字",
         label_sheet_mode: "双联纸张状态",
@@ -674,7 +743,7 @@
         slot_prompt_3: "点击上传第 3 格",
         slot_prompt_4: "点击上传第 4 格",
         action_replace: "替换",
-        btn_delete_single: "删除此格",
+        btn_delete_single: "删除",
         label_zoom: "大小缩放",
         label_rotate: "角度微调",
         btn_flip: "水平翻转",
@@ -699,6 +768,9 @@
         return_notice: '欢迎在 LOFTER 搜索 <a href="https://hispooky.lofter.com/" target="_blank" rel="noopener noreferrer" class="text-pumpkin-400 hover:text-pumpkin-300 font-semibold underline underline-offset-2 transition inline-flex items-center gap-0.5">HiSpooky<i class="fa-solid fa-arrow-up-right-from-square text-[9px] ml-0.5"></i></a> 在相关动态下返图',
         editing_slot_prefix: "正在编辑：第 ",
         editing_slot_suffix: " 格照片",
+        badge_untorn: "● 连体版",
+        badge_torn: "✂ 已撕开独立联",
+        tear_divider_text: "✂ 易撕线",
         toast_slot_loaded: "第 {n} 格照片已载入",
         toast_slot_cleared: "已删除第 {n} 格照片",
         toast_batch_loaded: "已成功载入 {n} 张照片！",
@@ -709,22 +781,30 @@
         toast_rejoined: "相纸已重新拼合为整版双联",
         toast_baking: "正在合成冲印级超清万圣相片...",
         toast_exported: "万圣相片已成功导出并下载！",
+        dispenser_printing: "✦ 胶片冲印出纸中... ✦",
+        dispenser_printing_dual: "✦ 独立双卡冲印出纸中... ✦",
+        dispenser_done: "✂️ 冲印完成！请取走你的万圣相片",
+        dispenser_done_dual: "✂️ 冲印完成！请取走你的相片与书签",
+        dispenser_hint: "相片已滑入取纸槽，正在自动保存至本地...",
+        dispenser_hint_dual: "相片与书签双卡已滑入取纸槽，正在依次保存至本地...",
         modal_title: "选择相片导出方式",
         modal_desc: "本适配器忠实还原线下人生四格机器规格，支持原版双联整幅输出，或自动撕开分为相片与书签两张独立高清卡片。",
-        opt_full_sheet: "导出整版双联相纸 (未撕开)",
-        opt_full_sheet_desc: "左侧照片 + 中间齿孔线 + 右侧书签 (冲印大图 1:1)",
-        opt_separated: "分开导出双卡 (一张相片 + 一张书签)",
-        opt_separated_desc: "自动撕开生成 2 张尺寸完全相同的高清独立卡片",
-        opt_photo_only: "仅导出左侧四格照片条 (Single Strip)"
+        opt_full_sheet: "导出整版双联相纸",
+        opt_full_sheet_desc: "左侧照片 + 中间齿孔线 + 右侧书签",
+        opt_separated: "分开导出独立双卡",
+        opt_separated_desc: "自动裁切为两张等大卡片：一张相片与一张书签",
+        opt_photo_only: "仅导出左侧四格相片"
       },
       en: {
         subtitle: "✦ A Halloween Photo Booth by HiSpooky ✦",
         btn_tear: "Tear Sheet",
         btn_rejoin: "Rejoin Sheet",
         btn_batch: "Import 4 Photos",
+        btn_batch_short: "Import",
         btn_clear: "Clear",
         btn_export: "Export Cuts",
         tip_gesture: "Drag freely inside frames to reposition, scroll to zoom in/out smoothly",
+        tip_gesture_mobile: "Drag inside slots to pan/zoom",
         tab_photo: "Photo Fine-tune",
         tab_text: "Stickers & Text",
         label_sheet_mode: "Twin Sheet Perforation",
@@ -739,7 +819,7 @@
         slot_prompt_3: "Click to upload Slot 3",
         slot_prompt_4: "Click to upload Slot 4",
         action_replace: "Replace",
-        btn_delete_single: "Clear Slot",
+        btn_delete_single: "Clear",
         label_zoom: "Scale Zoom",
         label_rotate: "Rotation",
         btn_flip: "Flip H",
@@ -764,6 +844,9 @@
         return_notice: 'Feel free to share your cuts on X and mention <a href="https://x.com/HiSpooky2814" target="_blank" rel="noopener noreferrer" class="text-pumpkin-400 hover:text-pumpkin-300 font-semibold underline underline-offset-2 transition inline-flex items-center gap-0.5">@HiSpooky2814<i class="fa-solid fa-arrow-up-right-from-square text-[9px] ml-0.5"></i></a>!',
         editing_slot_prefix: "Editing: Photo Slot #",
         editing_slot_suffix: "",
+        badge_untorn: "● DOUBLE SHEET",
+        badge_torn: "✂ TORN CUTS",
+        tear_divider_text: "✂ TEAR HERE",
         toast_slot_loaded: "Photo Slot #{n} loaded",
         toast_slot_cleared: "Photo Slot #{n} cleared",
         toast_batch_loaded: "Successfully loaded {n} photos!",
@@ -774,12 +857,18 @@
         toast_rejoined: "Twin sheet rejoined as one uncut print",
         toast_baking: "Baking high-resolution spooky photo strip...",
         toast_exported: "Spooky strip exported and downloaded!",
+        dispenser_printing: "✦ PRINTING PHOTO STRIP... ✦",
+        dispenser_printing_dual: "✦ PRINTING DUAL CUTS... ✦",
+        dispenser_done: "✂️ FRESHLY PRINTED! TAKE YOUR CUTS",
+        dispenser_done_dual: "✂️ FRESHLY PRINTED! TAKE BOTH CARDS",
+        dispenser_hint: "Cuts dispensed into the tray! Downloading to your device...",
+        dispenser_hint_dual: "Both cuts dispensed into the tray! Downloading one by one...",
         modal_title: "Choose Export Mode",
         modal_desc: "Simulating authentic physical photo booth prints. Export as one complete double sheet or separated cuts.",
-        opt_full_sheet: "Export Full Twin Sheet (Uncut)",
-        opt_full_sheet_desc: "Left photos + perforation line + right bookmark (1:1 uncut)",
-        opt_separated: "Export Separated Cuts (1 Photo + 1 Bookmark)",
-        opt_separated_desc: "Downloads 2 individual high-res cuts of identical dimensions",
+        opt_full_sheet: "Export Full Double Sheet",
+        opt_full_sheet_desc: "Left photos + perforation line + right bookmark",
+        opt_separated: "Export Separated Strips",
+        opt_separated_desc: "Separated into two equal cards: 1 photo & 1 bookmark",
         opt_photo_only: "Export Left Photo Strip Only"
       }
     };
@@ -814,13 +903,25 @@
     const activeSlotName = document.getElementById('active-slot-name');
 
     // 撕开交互控制
+    function updateSheetBadge() {
+      const dict = i18nData[currentLang];
+      const statusBadge = document.getElementById('status-sheet-state');
+      if (!statusBadge) return;
+      if (state.isTorn) {
+        statusBadge.textContent = dict.badge_torn;
+        statusBadge.className = 'text-witch-400';
+      } else {
+        statusBadge.textContent = dict.badge_untorn;
+        statusBadge.className = 'text-pumpkin-400';
+      }
+    }
+
     function setTornState(torn) {
       state.isTorn = torn;
       const dict = i18nData[currentLang];
       const tearIcon = document.getElementById('tear-icon');
       const tearLabel = document.getElementById('tear-label');
       const labelTearSidebar = document.getElementById('label-tear-sidebar');
-      const statusBadge = document.getElementById('status-sheet-state');
 
       if (state.isTorn) {
         twinSheet.classList.remove('sheet-joined');
@@ -828,8 +929,7 @@
         tearIcon.className = 'fa-solid fa-link text-witch-400';
         tearLabel.textContent = dict.btn_rejoin;
         labelTearSidebar.textContent = dict.btn_rejoin;
-        statusBadge.textContent = '✂ TORN CUTS (已撕开独立联)';
-        statusBadge.className = 'text-witch-400';
+        updateSheetBadge();
         showToast(dict.toast_torn, 'warn');
       } else {
         twinSheet.classList.remove('sheet-torn');
@@ -837,8 +937,7 @@
         tearIcon.className = 'fa-solid fa-scissors text-pumpkin-400';
         tearLabel.textContent = dict.btn_tear;
         labelTearSidebar.textContent = dict.btn_tear;
-        statusBadge.textContent = '● DOUBLE SHEET (连体版)';
-        statusBadge.className = 'text-pumpkin-400';
+        updateSheetBadge();
         showToast(dict.toast_rejoined, 'info');
       }
     }
@@ -846,6 +945,11 @@
     document.getElementById('btn-toggle-tear').addEventListener('click', () => setTornState(!state.isTorn));
     document.getElementById('btn-tear-sidebar').addEventListener('click', () => setTornState(!state.isTorn));
     tearDivider.addEventListener('click', () => setTornState(!state.isTorn));
+
+    const statusSheetBtn = document.getElementById('status-sheet-state-btn');
+    if (statusSheetBtn) {
+      statusSheetBtn.addEventListener('click', () => setTornState(!state.isTorn));
+    }
 
     function showToast(message, type = 'success') {
       const toast = document.getElementById('toast');
@@ -886,6 +990,18 @@
       if (creatorLinkEl) {
         creatorLinkEl.href = lang === 'zh' ? 'https://hispooky.lofter.com/' : 'https://archiveofourown.org/users/HiSpooky';
       }
+
+      const tearDividerText = document.getElementById('tear-divider-text');
+      if (tearDividerText) {
+        tearDividerText.textContent = dict.tear_divider_text;
+      }
+
+      const dispenserHint = document.getElementById('dispenser-take-hint');
+      if (dispenserHint && dict.dispenser_hint) {
+        dispenserHint.textContent = dict.dispenser_hint;
+      }
+
+      updateSheetBadge();
 
       activeSlotName.textContent = `${dict.editing_slot_prefix}${state.activeSlot + 1}${dict.editing_slot_suffix}`;
       document.getElementById('tear-label').textContent = state.isTorn ? dict.btn_rejoin : dict.btn_tear;
@@ -1595,20 +1711,20 @@
       ctx.strokeRect(6 * exportScale, 6 * exportScale, canvas.width - 12 * exportScale, canvas.height - 12 * exportScale);
       ctx.restore();
 
-      // 拍立得文字
+      // 拍立得文字（万圣同款 Creepster 字体）
       const footerEl = document.getElementById('photostrip-footer');
       const footerRect = footerEl.getBoundingClientRect();
 
       ctx.save();
       ctx.fillStyle = '#fb923c';
       ctx.textAlign = 'center';
-      ctx.font = `bold ${12 * exportScale}px Cinzel, serif`;
+      ctx.font = `bold ${18 * exportScale}px Creepster, cursive`;
       ctx.fillText(state.titleText, canvas.width / 2, (footerRect.top - leftRect.top + 16) * exportScale);
 
       ctx.font = `500 ${8.5 * exportScale}px Inter, monospace`;
       ctx.fillStyle = '#a8a29e';
       const subLine = `${state.dateText}  ✦  ${state.subText}`;
-      ctx.fillText(subLine, canvas.width / 2, (footerRect.top - leftRect.top + 27) * exportScale);
+      ctx.fillText(subLine, canvas.width / 2, (footerRect.top - leftRect.top + 28) * exportScale);
       ctx.restore();
 
       // 如果单独导出左联，将落在左联的贴纸投射进来
@@ -1738,6 +1854,127 @@
       link.click();
     }
 
+    // ================= 模拟线下快照机声音合成与吐纸仪式 =================
+    const dispenserOverlay = document.getElementById('dispenser-overlay');
+    const dispensedPreviewContainer = document.getElementById('dispensed-preview-container');
+    const dispensedCardStage = document.getElementById('dispensed-card-stage');
+    const btnCloseDispenser = document.getElementById('btn-close-dispenser');
+    if (btnCloseDispenser) {
+      btnCloseDispenser.addEventListener('click', () => {
+        if (dispenserOverlay) dispenserOverlay.classList.add('opacity-0', 'pointer-events-none');
+      });
+    }
+
+    function playPrinterSound() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const actx = new AudioCtx();
+
+        // 模拟打印机步进马达/吐纸滋滋齿轮声
+        const osc = actx.createOscillator();
+        const gain = actx.createGain();
+        const filter = actx.createBiquadFilter();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(140, actx.currentTime);
+        osc.frequency.linearRampToValueAtTime(80, actx.currentTime + 1.2);
+
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(800, actx.currentTime);
+
+        gain.gain.setValueAtTime(0.04, actx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.06, actx.currentTime + 0.6);
+        gain.gain.linearRampToValueAtTime(0.001, actx.currentTime + 1.3);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(actx.destination);
+
+        osc.start();
+        osc.stop(actx.currentTime + 1.3);
+      } catch (e) {
+        // 静默降级
+      }
+    }
+
+    function triggerDispenserExperience(previewData, onComplete) {
+      const isDual = Array.isArray(previewData);
+      const dict = i18nData[currentLang];
+      if (!dispenserOverlay || !dispensedPreviewContainer || !dispensedCardStage) {
+        if (onComplete) onComplete();
+        showToast(dict.toast_exported, 'success');
+        return;
+      }
+
+      dispensedPreviewContainer.innerHTML = '';
+
+      if (isDual) {
+        // 双卡并排模式：去掉外层边框与背景，展示两张带微倾撕开质感的卡片
+        dispensedPreviewContainer.className = 'flex items-center justify-center gap-3 sm:gap-4 p-0 bg-transparent border-0 shadow-none';
+
+        // 左卡：四格照片
+        const cardLeft = document.createElement('div');
+        cardLeft.className = 'rounded-xl overflow-hidden shadow-2xl border border-stone-700/90 bg-midnight-950 p-1 transform -rotate-2 -translate-x-1 transition-transform';
+        const imgLeft = document.createElement('img');
+        imgLeft.src = previewData[0];
+        imgLeft.className = 'max-h-[330px] w-auto object-contain block shadow-inner';
+        cardLeft.appendChild(imgLeft);
+
+        // 右卡：收藏书签
+        const cardRight = document.createElement('div');
+        cardRight.className = 'rounded-xl overflow-hidden shadow-2xl border border-stone-700/90 bg-midnight-950 p-1 transform rotate-2 translate-x-1 transition-transform';
+        const imgRight = document.createElement('img');
+        imgRight.src = previewData[1];
+        imgRight.className = 'max-h-[330px] w-auto object-contain block shadow-inner';
+        cardRight.appendChild(imgRight);
+
+        dispensedPreviewContainer.appendChild(cardLeft);
+        dispensedPreviewContainer.appendChild(cardRight);
+      } else {
+        // 单联模式：整版双联或仅照片单联
+        dispensedPreviewContainer.className = 'rounded-xl overflow-hidden shadow-2xl border border-stone-700/90 bg-midnight-950 p-1 flex items-center justify-center';
+        const img = document.createElement('img');
+        img.src = previewData;
+        img.className = 'max-h-[340px] w-auto object-contain block shadow-inner';
+        dispensedPreviewContainer.appendChild(img);
+      }
+
+      // 重置动画
+      dispensedCardStage.classList.remove('anim-dispense');
+      void dispensedCardStage.offsetWidth; // force reflow
+      dispensedCardStage.classList.add('anim-dispense');
+
+      const statusText = document.getElementById('dispenser-status-text');
+      const hintText = document.getElementById('dispenser-take-hint');
+
+      if (statusText) {
+        statusText.textContent = isDual ? (dict.dispenser_printing_dual || dict.dispenser_printing) : dict.dispenser_printing;
+      }
+      if (hintText) {
+        hintText.textContent = isDual ? (dict.dispenser_hint_dual || dict.dispenser_hint) : dict.dispenser_hint;
+      }
+
+      dispenserOverlay.classList.remove('opacity-0', 'pointer-events-none');
+
+      // 播放吐纸马达声效
+      playPrinterSound();
+
+      // 1.5 秒后完成出仓，触发下载
+      setTimeout(() => {
+        if (statusText) {
+          statusText.textContent = isDual ? (dict.dispenser_done_dual || dict.dispenser_done) : dict.dispenser_done;
+        }
+        if (onComplete) onComplete();
+        showToast(dict.toast_exported, 'success');
+
+        // 3 秒后自动关闭
+        setTimeout(() => {
+          dispenserOverlay.classList.add('opacity-0', 'pointer-events-none');
+        }, 3000);
+      }, 1500);
+    }
+
     // 1. 导出整版双联（未撕开，合并中间齿孔并完整投射贯穿式贴纸）
     document.getElementById('btn-export-combined').addEventListener('click', () => {
       btnCloseModal.click();
@@ -1775,12 +2012,16 @@
         // 贴右联书签
         ctx.drawImage(bookmarkCanvas, photoCanvas.width + tearGap, 0);
 
-        // 整体统一叠加贯穿全局的贴纸（无论贴纸横跨左右还是落在中缝都完美保留）
+        // 整体统一叠加贯穿全局的贴纸
         drawStickersToContext(ctx, 0, fullCanvas.width / exportScale, exportScale);
 
-        downloadDataUrl(fullCanvas.toDataURL('image/png', 0.96), `SpookyBooth_FullDoubleSheet_${Date.now()}.png`);
-        showToast(i18nData[currentLang].toast_exported, 'success');
-      }, 100);
+        const fullDataUrl = fullCanvas.toDataURL('image/png', 0.96);
+
+        // 启动线下快照机吐纸模拟动画
+        triggerDispenserExperience(fullDataUrl, () => {
+          downloadDataUrl(fullDataUrl, `SpookyBooth_FullDoubleSheet_${Date.now()}.png`);
+        });
+      }, 120);
     });
 
     // 2. 分开导出双份独立卡片（一张照片 + 一张书签，贴纸分别裁剪保留）
@@ -1793,15 +2034,18 @@
         const photoCanvas = renderPhotoStripCanvas(exportScale, true);
         const bookmarkCanvas = renderBookmarkCanvas(exportScale, true);
 
-        // 下载照片条
-        downloadDataUrl(photoCanvas.toDataURL('image/png', 0.96), `SpookyBooth_1_PhotoStrip_${Date.now()}.png`);
+        const photoDataUrl = photoCanvas.toDataURL('image/png', 0.96);
+        const bookmarkDataUrl = bookmarkCanvas.toDataURL('image/png', 0.96);
 
-        // 延迟触发第二张下载以避免浏览器拦截多文件并发下载
-        setTimeout(() => {
-          downloadDataUrl(bookmarkCanvas.toDataURL('image/png', 0.96), `SpookyBooth_2_Bookmark_${Date.now()}.png`);
-          showToast(i18nData[currentLang].toast_exported, 'success');
-        }, 350);
-      }, 100);
+        // 启动线下快照机吐纸模拟动画（传入左右双卡图片数组）
+        triggerDispenserExperience([photoDataUrl, bookmarkDataUrl], () => {
+          downloadDataUrl(photoDataUrl, `SpookyBooth_1_PhotoStrip_${Date.now()}.png`);
+
+          setTimeout(() => {
+            downloadDataUrl(bookmarkDataUrl, `SpookyBooth_2_Bookmark_${Date.now()}.png`);
+          }, 400);
+        });
+      }, 120);
     });
 
     // 3. 仅导出单张照片条
@@ -1810,9 +2054,12 @@
       showToast(i18nData[currentLang].toast_baking, 'info');
       setTimeout(() => {
         const photoCanvas = renderPhotoStripCanvas(4, true);
-        downloadDataUrl(photoCanvas.toDataURL('image/png', 0.96), `SpookyBooth_PhotoStrip_${Date.now()}.png`);
-        showToast(i18nData[currentLang].toast_exported, 'success');
-      }, 100);
+        const photoDataUrl = photoCanvas.toDataURL('image/png', 0.96);
+
+        triggerDispenserExperience(photoDataUrl, () => {
+          downloadDataUrl(photoDataUrl, `SpookyBooth_PhotoStrip_${Date.now()}.png`);
+        });
+      }, 120);
     });
 
     // 动态视口自适应缩放计算函数
