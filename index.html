@@ -98,7 +98,8 @@
       pointer-events: none;
       transition: opacity 0.18s ease, transform 0.18s ease;
     }
-    .photo-slot:hover .slot-hover-delete {
+    .photo-slot:hover .slot-hover-delete,
+    .photo-slot.slot-selected-shadow .slot-hover-delete {
       opacity: 1;
       pointer-events: auto;
     }
@@ -1064,9 +1065,12 @@
       const placeholderEl = slotEl.querySelector('.slot-placeholder');
       const hoverDelBtn = slotEl.querySelector('.slot-hover-delete');
 
+      if (hoverDelBtn) {
+        hoverDelBtn.style.display = 'flex';
+      }
+
       if (slotData.img) {
         placeholderEl.style.display = 'none';
-        if (hoverDelBtn) hoverDelBtn.style.display = 'flex';
         let img = contentEl.querySelector('img');
         
         if (!img || img.dataset.src !== slotData.img.src) {
@@ -1088,7 +1092,6 @@
       } else {
         placeholderEl.style.display = 'flex';
         contentEl.innerHTML = '';
-        if (hoverDelBtn) hoverDelBtn.style.display = 'none';
       }
 
       if (state.activeSlot === index) {
