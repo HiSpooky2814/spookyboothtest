@@ -173,11 +173,11 @@
     </div>
 
     <!-- 顶部操作区 -->
-    <div class="flex items-center gap-2 sm:gap-3">
+    <div class="flex items-center gap-1.5 sm:gap-3">
       <!-- 撕开/合拢 快捷动作 -->
-      <button id="btn-toggle-tear" class="px-3 py-1.5 rounded-xl border border-pumpkin-500/50 bg-pumpkin-950/40 hover:bg-pumpkin-900/50 text-pumpkin-300 text-xs font-semibold transition flex items-center gap-1.5 shadow-sm active:scale-95">
+      <button id="btn-toggle-tear" class="px-2 sm:px-3 py-1.5 rounded-xl border border-pumpkin-500/50 bg-pumpkin-950/40 hover:bg-pumpkin-900/50 text-pumpkin-300 text-xs font-semibold transition flex items-center gap-1.5 shadow-sm active:scale-95">
         <i id="tear-icon" class="fa-solid fa-scissors text-pumpkin-400"></i>
-        <span id="tear-label" data-i18n="btn_tear">撕开相纸</span>
+        <span id="tear-label" data-i18n="btn_tear" class="hidden md:inline">撕开相纸</span>
       </button>
 
       <!-- 中英语言切换 -->
@@ -187,40 +187,43 @@
       </button>
 
       <!-- 批量导入 -->
-      <button id="btn-batch-upload" class="px-3.5 py-1.5 rounded-xl border border-stone-700 hover:border-pumpkin-500 bg-midnight-800 text-xs sm:text-sm font-medium hover:bg-midnight-700 text-stone-200 transition flex items-center gap-1.5 shadow-sm">
+      <button id="btn-batch-upload" class="px-2 sm:px-3.5 py-1.5 rounded-xl border border-stone-700 hover:border-pumpkin-500 bg-midnight-800 text-xs sm:text-sm font-medium hover:bg-midnight-700 text-stone-200 transition flex items-center gap-1.5 shadow-sm">
         <i class="fa-solid fa-images text-pumpkin-400"></i>
-        <span data-i18n="btn_batch">导入4张照片</span>
+        <span data-i18n="btn_batch" class="hidden lg:inline">导入4张照片</span>
       </button>
 
       <!-- 清空照片 -->
-      <button id="btn-clear-all" class="px-3 py-1.5 rounded-xl border border-stone-800 text-xs sm:text-sm text-stone-400 hover:text-red-400 hover:border-red-900/50 hover:bg-red-950/20 transition flex items-center gap-1">
+      <button id="btn-clear-all" class="px-2 sm:px-3 py-1.5 rounded-xl border border-stone-800 text-xs sm:text-sm text-stone-400 hover:text-red-400 hover:border-red-900/50 hover:bg-red-950/20 transition flex items-center gap-1">
         <i class="fa-solid fa-trash-can text-xs"></i>
         <span data-i18n="btn_clear" class="hidden sm:inline">清空</span>
       </button>
 
       <!-- 导出菜单按钮 -->
-      <button id="btn-export-menu" class="px-4 py-1.5 rounded-xl bg-pumpkin-600 hover:bg-pumpkin-500 text-white text-xs sm:text-sm font-semibold active:scale-95 transition flex items-center gap-1.5 shadow-md">
+      <button id="btn-export-menu" class="px-3 sm:px-4 py-1.5 rounded-xl bg-pumpkin-600 hover:bg-pumpkin-500 text-white text-xs sm:text-sm font-semibold active:scale-95 transition flex items-center gap-1.5 shadow-md">
         <i class="fa-solid fa-download"></i>
-        <span data-i18n="btn_export">导出相片</span>
+        <span data-i18n="btn_export" class="hidden sm:inline">导出相片</span>
         <i class="fa-solid fa-chevron-down text-[10px] ml-0.5"></i>
       </button>
     </div>
   </header>
 
-  <main class="flex-1 flex flex-col lg:flex-row overflow-hidden max-w-[1700px] w-full mx-auto p-3 sm:p-5 gap-5">
+  <main class="flex-1 flex flex-col lg:flex-row overflow-hidden max-w-[1700px] w-full mx-auto p-2 sm:p-5 gap-3 sm:gap-5">
     
     <!-- 左侧/中间：双联相纸预览工作区 -->
-    <section class="flex-1 bg-midnight-900/60 rounded-3xl p-4 sm:p-8 flex items-center justify-center overflow-auto relative border border-purple-950/60 min-h-[600px]">
+    <section class="flex-1 bg-midnight-900/60 rounded-3xl p-2 sm:p-8 pt-14 sm:pt-20 flex items-center justify-center overflow-auto relative border border-purple-950/60 min-h-[500px] sm:min-h-[600px]">
       
-      <!-- 预览操作提示与模式状态 -->
-      <div class="absolute top-4 left-4 z-30 flex items-center gap-2 bg-midnight-850/90 backdrop-blur px-3 py-1.5 rounded-xl text-xs text-stone-300 shadow-md border border-stone-800">
-        <i class="fa-solid fa-ghost text-pumpkin-400"></i>
-        <span id="tip-main" data-i18n="tip_gesture">左侧四格可拖拽平移，右侧为同尺寸万圣收藏书签</span>
-      </div>
+      <!-- 绝对定位的浮动提示与徽章栏 (限定在顶部安全区，永不遮挡相框) -->
+      <div class="absolute top-3 sm:top-5 inset-x-3 sm:inset-x-6 z-30 flex items-center justify-between gap-2 pointer-events-none">
+        <!-- 左侧提示 -->
+        <div class="pointer-events-auto flex items-center gap-1.5 sm:gap-2 bg-midnight-850/90 backdrop-blur px-2.5 sm:px-3 py-1.5 rounded-xl text-[10px] sm:text-xs text-stone-300 shadow-md border border-stone-800 flex-1 min-w-0 max-w-fit">
+          <i class="fa-solid fa-ghost text-pumpkin-400 shrink-0"></i>
+          <span id="tip-main" data-i18n="tip_gesture" class="truncate">左侧四格可拖拽平移，右侧为同尺寸万圣收藏书签</span>
+        </div>
 
-      <!-- 撕开状态小徽章提示 -->
-      <div class="absolute top-4 right-4 z-30 flex items-center gap-2 bg-midnight-850/90 backdrop-blur px-3 py-1.5 rounded-xl text-xs font-mono text-pumpkin-400 shadow-md border border-stone-800">
-        <span id="status-sheet-state">● 连体版</span>
+        <!-- 右侧连体版徽章 (支持直接点击手撕) -->
+        <button id="status-sheet-state-btn" class="pointer-events-auto flex items-center gap-1.5 sm:gap-2 bg-midnight-850/90 backdrop-blur px-2.5 sm:px-3 py-1.5 rounded-xl text-[10px] sm:text-xs font-mono text-pumpkin-400 shadow-md border border-stone-800 active:scale-95 transition shrink-0 hover:bg-midnight-800">
+          <span id="status-sheet-state">● 连体版</span>
+        </button>
       </div>
 
       <!-- 核心双联相纸卡片外层容器 (Twin Strip Container) -->
@@ -2071,8 +2074,13 @@
       const container = wrapper.parentElement;
       if (!container) return;
 
-      const availableW = container.clientWidth - 32;
-      const availableH = container.clientHeight - 80;
+      // 精确扣除 Section 的真实 Padding，划分出安全的相纸缩放区，彻底防止向上生长遮挡徽章
+      const style = window.getComputedStyle(container);
+      const paddingY = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+      const paddingX = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+
+      const availableW = container.clientWidth - paddingX;
+      const availableH = container.clientHeight - paddingY - 16; // 预留 16px 的呼吸安全边界
 
       const baseW = twinSheetEl.offsetWidth || 546;
       const baseH = twinSheetEl.offsetHeight || 850;
@@ -2084,7 +2092,7 @@
       let fitScale = Math.min(scaleX, scaleY, 1);
 
       // 设置手机端最小缩放保护
-      fitScale = Math.max(fitScale, 0.4);
+      fitScale = Math.max(fitScale, 0.25);
       fitScale = parseFloat(fitScale.toFixed(3));
 
       wrapper.style.transform = `scale(${fitScale})`;
